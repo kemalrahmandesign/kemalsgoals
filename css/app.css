@@ -46,8 +46,11 @@
   --aurora: linear-gradient(97deg, #3ca1ff 5.54%, #c852ff 49.85%, #ff60f0 94.14%);
   --plum-pink: linear-gradient(142deg, #ba59ff 0%, #ba59ff 30%, #ff59f1 100%);
 
-  /* ---- type ---- */
-  --display: 'Clash Display', 'Agrandir', ui-sans-serif, system-ui, sans-serif;
+  /* ---- type ----
+     One family, two roles. DESIGN_2 asks for Agrandir at display sizes and
+     lists Manrope 800 as a substitute; at 64px against 16px body, size and
+     weight carry the hierarchy without a second font to load. */
+  --display: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --body: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* ---- form ---- */
@@ -87,7 +90,7 @@ body {
 /* Numerals must never reflow as they tick. */
 .num, .tabular { font-variant-numeric: tabular-nums; }
 
-h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -.02em; margin: 0; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.02em; margin: 0; }
 
 .label {
   font-family: var(--body);
@@ -236,7 +239,7 @@ html.has-cursor summary { cursor: none; }
   stroke-linecap: round;
   transition: stroke-dashoffset .6s var(--ease-spring);
 }
-.today-ring .count { font-family: var(--display); font-size: 20px; font-weight: 600; }
+.today-ring .count { font-family: var(--display); font-size: 20px; font-weight: 800; }
 
 .task {
   display: flex; align-items: center; gap: 15px; width: 100%;
@@ -296,7 +299,7 @@ html.has-cursor summary { cursor: none; }
 .streak:last-child { background: var(--wash); color: var(--plum); }
 .streak:last-child .label { color: var(--mauve); }
 .streak .big {
-  font-family: var(--display); font-weight: 600;
+  font-family: var(--display); font-weight: 800;
   font-size: clamp(38px, 11vw, 52px); line-height: 1; letter-spacing: -.03em;
   display: block; margin: 10px 0 4px;
 }
@@ -330,7 +333,7 @@ html.has-cursor summary { cursor: none; }
   color: var(--c); opacity: .8; display: block; line-height: 1.35; min-height: 2.7em;
 }
 .mini .v {
-  font-family: var(--display); font-weight: 600; font-size: 32px; line-height: 1;
+  font-family: var(--display); font-weight: 800; font-size: 32px; line-height: 1;
   letter-spacing: -.02em; color: var(--c); display: block; margin: 10px 0 2px;
 }
 .mini .of { font-size: 11px; font-weight: 500; color: var(--c); opacity: .72; display: block; }
@@ -429,7 +432,7 @@ html.has-cursor summary { cursor: none; }
    ========================================================================== */
 
 .money {
-  font-family: var(--display); font-weight: 600;
+  font-family: var(--display); font-weight: 800;
   font-size: clamp(40px, 11vw, 56px); line-height: 1; letter-spacing: -.03em;
   font-variant-numeric: tabular-nums;
 }
@@ -511,7 +514,7 @@ textarea { resize: vertical; min-height: 76px; }
 .field { margin-bottom: 16px; }
 .field label { display: block; margin-bottom: 8px; }
 .agenda { background: var(--soft); border-radius: var(--r-md); padding: 22px; margin-top: 18px; }
-.ag-head { font-family: var(--display); font-weight: 600; font-size: 24px; letter-spacing: -.02em; line-height: 1.15; }
+.ag-head { font-family: var(--display); font-weight: 800; font-size: 24px; letter-spacing: -.02em; line-height: 1.15; }
 .ag-sec { font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); margin: 20px 0 8px; }
 .ag-row {
   display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
