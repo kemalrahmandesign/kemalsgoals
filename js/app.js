@@ -680,8 +680,8 @@
   }
 
   /* ==================================================================
-     Cursor — one circle. Position and scale both run in the same rAF, so
-     nothing is waiting on a CSS transition to catch up.
+     Cursor — one circle, one size. No hover state: it never grows, never
+     changes colour, it just follows the pointer.
      ================================================================== */
 
   function initCursor() {
@@ -689,21 +689,13 @@
 
     var dot = document.querySelector('.cursor');
     var x = innerWidth / 2, y = innerHeight / 2;
-    var tx = x, ty = y, s = 1, ts = 1;
-    /* The chart is deliberately not "hot": a swollen cursor sits right on top
-       of the readout it is scrubbing. */
-    var HOT = 'a, button, input, textarea, summary, .task, .step, .del, .link-btn';
+    var tx = x, ty = y;
 
     document.addEventListener('mousemove', function (e) {
       tx = e.clientX; ty = e.clientY;
       document.documentElement.classList.add('has-cursor');
-      var hot = !!(e.target.closest && e.target.closest(HOT));
-      ts = hot ? 2.5 : 1;
-      dot.classList.toggle('hot', hot);
     }, { passive: true });
 
-    document.addEventListener('mousedown', function () { ts *= 0.7; });
-    document.addEventListener('mouseup', function () { ts /= 0.7; });
     document.addEventListener('mouseleave', function () {
       document.documentElement.classList.remove('has-cursor');
     });
@@ -711,8 +703,7 @@
     (function loop() {
       x += (tx - x) * 0.38;
       y += (ty - y) * 0.38;
-      s += (ts - s) * 0.22;
-      dot.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) scale(' + s.toFixed(3) + ')';
+      dot.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
       requestAnimationFrame(loop);
     })();
   }

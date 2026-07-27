@@ -93,9 +93,9 @@ h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.02
 }
 
 /* ==========================================================================
-   Cursor — one circle, nothing inside it.
-   Position and scale are both driven in rAF; a CSS transition on transform
-   would fight the loop and read as lag.
+   Cursor — one circle, nothing inside it, one fixed size.
+   Position is driven in rAF; a CSS transition on transform would fight the
+   loop and read as lag.
    ========================================================================== */
 
 .cursor {
@@ -109,10 +109,9 @@ h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.02
   z-index: 9999;
   opacity: 0;
   will-change: transform;
-  transition: opacity .2s ease, background-color .25s ease;
+  transition: opacity .2s ease;
 }
 html.has-cursor .cursor { opacity: 1; }
-html.has-cursor .cursor.hot { background: var(--violet); }
 html.has-cursor,
 html.has-cursor a,
 html.has-cursor button,
