@@ -1,0 +1,39 @@
+name: pages
+
+# Note: GitHub Pages from a *private* repository requires a paid plan
+# (Pro / Team / Enterprise). On the free plan either make the repo public or
+# host the folder somewhere else — it is a static site with no build step, so
+# any static host works.
+
+on:
+  push:
+    branches:
+      - main
+      - claude/habit-tracker-webapp-kt1epf
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
