@@ -26,8 +26,8 @@
 <style>
 /* ==========================================================================
    26-week accountability dashboard — Whimsical plum design system.
-   Tokens come straight from DESIGN_2.md; the chart series palette is the
-   one exception (see --s1..--s4 below) and is documented there.
+   Tokens come from DESIGN_2.md; the chart series palette is the one
+   documented exception (see --s1..--s4).
    ========================================================================== */
 
 :root {
@@ -44,23 +44,18 @@
   --muted:         #6a5b72;
 
   /* ---- accents ---- */
-  --violet:        #ab2fed;   /* interactive text, icons — never a big fill */
+  --violet:        #ab2fed;
   --blue:          #0283ec;
   --indigo:        #4b38ee;
 
   /* ---- chart series ----
-     DESIGN_2's vivid violet + vivid blue are ΔE 1.6 apart under deuteranopia,
-     i.e. the same colour to ~5% of men. Slot 1 is a deepened violet that keeps
-     the brand family while clearing the CVD gate. Validated all-pairs on white:
-     worst CVD ΔE 8.0, all slots ≥3:1 contrast. */
+     DESIGN_2's own accents collapse under colour-blindness: vivid violet and
+     vivid blue sit ΔE 1.6 apart for deuteranopia. These four are validated
+     all-pairs on white — worst CVD ΔE 8.4, tritan 11.0, every slot ≥3:1. */
   --s1: #8a1fd0;              /* customers signed — cumulative */
   --s2: #0283ec;              /* local walk-ins */
-  --s3: #0d9268;              /* gym sessions */
-  --s4: #f2661a;              /* stranger convos */
-  --s1-tint: #f3e9fc;
-  --s2-tint: #e2f1fd;
-  --s3-tint: #e1f3ec;
-  --s4-tint: #fdeee4;
+  --s3: #d61f6d;              /* gym sessions */
+  --s4: #e07a00;              /* stranger convos */
 
   /* ---- status ---- */
   --good:          #0d9268;
@@ -68,9 +63,8 @@
   --bad:           #d8342b;
   --bad-tint:      #fbe8e6;
 
-  /* ---- gradients (full-bleed only, per DESIGN_2) ---- */
+  /* ---- gradients ---- */
   --aurora: linear-gradient(97deg, #3ca1ff 5.54%, #c852ff 49.85%, #ff60f0 94.14%);
-  --plum-pink: linear-gradient(142deg, #ba59ff 0%, #ba59ff 30%, #ff59f1 100%);
 
   /* ---- type ----
      One family, two roles. DESIGN_2 asks for Agrandir at display sizes and
@@ -83,13 +77,11 @@
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
-  --r-xl: 28px;
   --pill: 9999px;
 
   /* plum-tinted shadows only — never neutral grey */
-  --lift:  0 16px 32px -4px rgba(37, 8, 53, .06);
+  --lift:   0 16px 32px -4px rgba(37, 8, 53, .06);
   --lift-2: 0 12px 16px -4px rgba(37, 8, 53, .12);
-  --hard:  0 3px 0 0 var(--shadow-color, #12041c);
 
   --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
   --ease-out: cubic-bezier(.22, 1, .36, 1);
@@ -111,9 +103,8 @@ body {
   overflow-x: hidden;
 }
 
-.wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+.wrap { max-width: 780px; margin: 0 auto; padding: 0 20px; }
 
-/* Numerals must never reflow as they tick. */
 .num, .tabular { font-variant-numeric: tabular-nums; }
 
 h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.02em; margin: 0; }
@@ -128,34 +119,26 @@ h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.02
 }
 
 /* ==========================================================================
-   Custom cursor — a circle that follows with easing and swells on targets.
-   Fine pointers only; touch keeps the native behaviour.
+   Cursor — one circle, nothing inside it.
+   Position and scale are both driven in rAF; a CSS transition on transform
+   would fight the loop and read as lag.
    ========================================================================== */
 
-.cursor, .cursor-dot {
+.cursor {
   position: fixed;
   top: 0; left: 0;
+  width: 14px; height: 14px;
+  margin: -7px 0 0 -7px;
   border-radius: 50%;
+  background: var(--plum);
   pointer-events: none;
   z-index: 9999;
   opacity: 0;
-  transition: opacity .25s ease;
+  will-change: transform;
+  transition: opacity .2s ease, background-color .25s ease;
 }
-.cursor {
-  width: 34px; height: 34px;
-  margin: -17px 0 0 -17px;
-  border: 1.5px solid var(--plum);
-  transition: width .3s var(--ease-spring), height .3s var(--ease-spring),
-              margin .3s var(--ease-spring), background-color .3s ease,
-              border-color .3s ease, opacity .25s ease;
-}
-.cursor-dot {
-  width: 5px; height: 5px;
-  margin: -2.5px 0 0 -2.5px;
-  background: var(--plum);
-}
-html.has-cursor .cursor,
-html.has-cursor .cursor-dot { opacity: 1; }
+html.has-cursor .cursor { opacity: 1; }
+html.has-cursor .cursor.hot { background: var(--violet); }
 html.has-cursor,
 html.has-cursor a,
 html.has-cursor button,
@@ -163,80 +146,104 @@ html.has-cursor input,
 html.has-cursor textarea,
 html.has-cursor summary { cursor: none; }
 
-/* over something clickable */
-.cursor.is-hot {
-  width: 58px; height: 58px;
-  margin: -29px 0 0 -29px;
-  background: rgba(171, 47, 237, .1);
-  border-color: var(--violet);
-}
-.cursor.is-down { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
-
 /* ==========================================================================
-   Masthead — the 26-week clock. Full-bleed gradient, as the system requires.
+   Top nav — the clock and the week selector
    ========================================================================== */
 
-.mast {
-  position: relative;
-  background: var(--plum-pink);
-  color: #fff;
-  padding: 26px 0 24px;
-  overflow: hidden;
-  margin-bottom: 28px;
+.topbar {
+  position: sticky; top: 0; z-index: 60;
+  background: rgba(255, 255, 255, .88);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--mist);
+  padding: 14px 0 0;
+  margin-bottom: 22px;
 }
-/* printed-paper grain over the gradient */
-.mast::after {
-  content: '';
-  position: absolute; inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
-  opacity: .16;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-}
-.mast > * { position: relative; z-index: 1; }
-.mast .label { color: rgba(255, 255, 255, .78); }
+.topbar-row { display: flex; align-items: center; gap: 10px; }
 
-.mast h1 {
-  font-size: clamp(38px, 11vw, 64px);
-  line-height: .95;
-  letter-spacing: -.03em;
-  margin: 8px 0 0;
+.wknav {
+  flex: 0 0 34px; width: 34px; height: 34px;
+  border: 1px solid var(--mist); background: var(--canvas);
+  border-radius: var(--pill); padding: 0;
+  display: grid; place-items: center; cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s var(--ease-spring);
 }
-.mast-row {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  gap: 16px; flex-wrap: wrap; margin-top: 14px;
-}
-.mast-meta { display: flex; gap: 18px; flex-wrap: wrap; }
+.wknav svg { width: 16px; height: 16px; fill: none; stroke: var(--plum); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.wknav:hover:not(:disabled) { background: var(--plum); border-color: var(--plum); transform: scale(1.08); }
+.wknav:hover:not(:disabled) svg { stroke: #fff; }
+.wknav:disabled { opacity: .3; cursor: default; }
 
-/* pace headline chip, mirrors the chart's NOW gap */
-.mast-pace {
-  font-size: 13px; font-weight: 700;
-  padding: 8px 16px; border-radius: var(--pill);
-  background: rgba(255, 255, 255, .17);
-  border: 1px solid rgba(255, 255, 255, .3);
-  backdrop-filter: blur(8px);
+.wk-title { font-size: clamp(21px, 5.2vw, 27px); line-height: 1.05; letter-spacing: -.03em; }
+.wk-of { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: -2px; }
+
+.pace-chip {
+  margin-left: auto;
+  font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+  padding: 8px 15px; border-radius: var(--pill);
+  background: var(--soft); color: var(--muted);
   white-space: nowrap;
+  transition: background .3s ease, color .3s ease;
+}
+.pace-chip[data-s="ahead"]  { background: var(--good-tint); color: #0a6b4d; }
+.pace-chip[data-s="behind"] { background: var(--bad-tint);  color: var(--bad); }
+.pace-chip--solid { margin-left: 0; font-size: 13px; margin-top: 14px; display: inline-block; }
+
+/* --- the 26-week rail --- */
+.rail {
+  position: relative; height: 10px;
+  margin: 14px 0 12px;
+  background: var(--mist);
+  border-radius: var(--pill);
+  overflow: hidden;
+}
+.rail-fill {
+  position: absolute; inset: 0 auto 0 0; width: 0;
+  background: var(--aurora);
+  border-radius: var(--pill);
+  transition: width .8s var(--ease-out);
+}
+/* one hairline notch per week boundary */
+.rail-ticks {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(100% / 26 - 1.5px),
+    rgba(255, 255, 255, .95) calc(100% / 26 - 1.5px),
+    rgba(255, 255, 255, .95) calc(100% / 26)
+  );
+  pointer-events: none;
+}
+.rail-hits { position: absolute; inset: 0; display: flex; }
+.rail-hits button {
+  flex: 1; border: 0; background: none; padding: 0; cursor: pointer;
+  position: relative;
+}
+.rail-hits button:disabled { cursor: default; }
+.rail-hits button::after {
+  content: ''; position: absolute; inset: 0;
+  background: var(--plum); opacity: 0;
+  transition: opacity .18s ease;
+}
+.rail-hits button:hover:not(:disabled)::after { opacity: .22; }
+/* The selected week is outlined, not filled — a solid block reads as a hole
+   punched in the gradient rather than a marker sitting on it. */
+.rail-hits button[aria-selected="true"]::after {
+  opacity: 1;
+  background: none;
+  box-shadow: inset 0 0 0 2px var(--plum);
+  border-radius: 3px;
 }
 
-/* 26 segments — one per week — so the deadline is always visible */
-.rail { display: flex; gap: 3px; margin-top: 20px; }
-.rail i {
-  flex: 1; height: 6px; border-radius: 2px;
-  background: rgba(255, 255, 255, .26);
-  transform-origin: bottom;
-  animation: railIn .5s var(--ease-spring) backwards;
+.daterow {
+  display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 22px;
 }
-.rail i.done { background: #fff; }
-.rail i.now {
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, .45);
-  animation: railIn .5s var(--ease-spring) backwards, pulse 2.2s ease-in-out 1s infinite;
-}
-@keyframes railIn { from { transform: scaleY(.2); opacity: 0; } }
-@keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(255, 255, 255, 0); } }
 
 /* ==========================================================================
-   Cards
+   Cards + section reveals
    ========================================================================== */
 
 .card {
@@ -253,17 +260,35 @@ html.has-cursor summary { cursor: none; }
 }
 .card-head h2 { font-size: 24px; letter-spacing: -.24px; }
 
+.reveal { opacity: 0; transform: translateY(22px); }
+.reveal.in {
+  opacity: 1; transform: none;
+  transition: opacity .55s var(--ease-out), transform .7s var(--ease-out);
+}
+
+/* per-character text reveal: up from below, left to right */
+.rt { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: .08em; }
+/* longhand, not the shorthand: each character carries its own inline
+   transition-delay and a shorthand here would reset it to 0 */
+.rt i {
+  display: inline-block; font-style: normal;
+  transform: translateY(110%);
+  transition-property: transform;
+  transition-duration: .75s;
+  transition-timing-function: var(--ease-out);
+}
+.rt-in i { transform: none; }
+
 /* ==========================================================================
-   Today — the morning screen. Biggest tap targets on the page.
+   Today
    ========================================================================== */
 
 .today-ring { display: flex; align-items: center; gap: 14px; }
 .today-ring svg { width: 44px; height: 44px; transform: rotate(-90deg); }
 .today-ring .track { stroke: var(--mist); }
 .today-ring .fill {
-  stroke: var(--violet);
-  stroke-linecap: round;
-  transition: stroke-dashoffset .6s var(--ease-spring);
+  stroke: var(--violet); stroke-linecap: round;
+  transition: stroke-dashoffset .7s var(--ease-spring);
 }
 .today-ring .count { font-family: var(--display); font-size: 20px; font-weight: 800; }
 
@@ -303,124 +328,11 @@ html.has-cursor summary { cursor: none; }
 
 .keystone {
   font-size: 9px; font-weight: 700; letter-spacing: .15em;
-  color: var(--violet); background: var(--s1-tint);
+  color: var(--violet); background: #f5eafd;
   padding: 5px 10px; border-radius: var(--pill);
   white-space: nowrap;
 }
-
-/* the whole-list celebration */
 .card.all-done { border-color: var(--violet); }
-
-/* ==========================================================================
-   Streaks — solid blocks, weight at the top of the page
-   ========================================================================== */
-
-.streaks { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.streak {
-  border-radius: var(--r-lg); padding: 22px;
-  box-shadow: var(--lift); overflow: hidden; position: relative;
-}
-.streak:first-child { background: var(--plum); color: #fff; }
-.streak:first-child .label { color: var(--wash); }
-.streak:last-child { background: var(--wash); color: var(--plum); }
-.streak:last-child .label { color: var(--mauve); }
-.streak .big {
-  font-family: var(--display); font-weight: 800;
-  font-size: clamp(38px, 11vw, 52px); line-height: 1; letter-spacing: -.03em;
-  display: block; margin: 10px 0 4px;
-}
-.streak .unit { font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; opacity: .8; }
-
-/* a flame that grows with the streak */
-.streak .spark {
-  position: absolute; right: -10px; bottom: -12px;
-  font-size: 68px; line-height: 1; opacity: .14;
-  transform-origin: bottom center;
-  animation: flicker 3.5s ease-in-out infinite;
-}
-@keyframes flicker {
-  0%, 100% { transform: scale(1) rotate(-3deg); }
-  50%      { transform: scale(1.09) rotate(3deg); }
-}
-
-/* ==========================================================================
-   "The other four" — liquid fill meters
-   ========================================================================== */
-
-.minis { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (min-width: 620px) { .minis { grid-template-columns: repeat(4, 1fr); } }
-
-.mini {
-  background: var(--tint); border-radius: var(--r-md);
-  padding: 16px 14px 14px; position: relative; overflow: hidden;
-}
-.mini .name {
-  font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
-  color: var(--c); opacity: .8; display: block; line-height: 1.35; min-height: 2.7em;
-}
-.mini .v {
-  font-family: var(--display); font-weight: 800; font-size: 32px; line-height: 1;
-  letter-spacing: -.02em; color: var(--c); display: block; margin: 10px 0 2px;
-}
-.mini .of { font-size: 11px; font-weight: 500; color: var(--c); opacity: .72; display: block; }
-
-/* the jar the liquid sits in */
-.jar { position: relative; margin-top: 12px; height: 62px; border-radius: var(--r-sm); overflow: hidden; }
-.jar svg { display: block; width: 100%; height: 100%; }
-.jar .target-line { stroke: var(--c); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: .55; }
-
-/* target met — the jar glows and the badge pops in */
-.mini.hit { box-shadow: inset 0 0 0 2px var(--c); }
-.mini .flag {
-  position: absolute; top: 12px; right: 12px;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--c); color: #fff;
-  display: grid; place-items: center;
-  transform: scale(0); transition: transform .4s var(--ease-spring);
-}
-.mini.hit .flag { transform: scale(1); }
-.mini .flag svg { width: 12px; height: 12px; }
-
-/* weekly history under the jar */
-.spark-row { display: flex; align-items: flex-end; gap: 2px; height: 18px; margin-top: 10px; }
-.spark-row i {
-  flex: 1; background: var(--c); opacity: .32; border-radius: 2px 2px 0 0;
-  min-height: 2px; transform-origin: bottom;
-  transition: height .5s var(--ease-spring);
-}
-.spark-row i.last { opacity: .9; }
-
-/* ==========================================================================
-   Pace chart
-   ========================================================================== */
-
-.ramp svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
-.ramp .grid-line { stroke: var(--mist); stroke-width: 1; }
-.ramp .month-line { stroke: var(--mist); stroke-width: 1; stroke-dasharray: 2 5; }
-.ramp .axis-text { font-family: var(--body); font-size: 9px; font-weight: 600; fill: var(--muted); }
-.ramp .now-line { stroke: var(--plum); stroke-width: 1.5; stroke-dasharray: 4 4; }
-.ramp .now-text { font-family: var(--body); font-size: 9px; font-weight: 700; fill: var(--plum); letter-spacing: .1em; }
-
-.legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; font-size: 11px; font-weight: 700; color: var(--muted); }
-.legend span { background: var(--soft); border-radius: var(--pill); padding: 6px 12px; }
-.swatch { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
-
-/* crosshair readout */
-.ramp .hover-line { stroke: var(--plum); stroke-width: 1; opacity: .3; }
-.tip {
-  position: absolute; pointer-events: none; z-index: 20;
-  background: var(--plum); color: #fff;
-  border-radius: var(--r-md); padding: 10px 13px;
-  font-size: 12px; line-height: 1.45; white-space: nowrap;
-  box-shadow: var(--lift-2);
-  opacity: 0; transform: translate(-50%, -118%) scale(.94);
-  transition: opacity .16s ease, transform .16s var(--ease-out);
-}
-.tip.on { opacity: 1; transform: translate(-50%, -128%) scale(1); }
-.tip b { font-variant-numeric: tabular-nums; }
-.tip .t-behind { color: #ff9f97; }
-.tip .t-ahead { color: #7ee6c0; }
-.ramp-wrap { position: relative; }
 
 /* ==========================================================================
    Weekly inputs
@@ -435,23 +347,119 @@ html.has-cursor summary { cursor: none; }
 
 .step {
   width: 36px; height: 36px; flex: 0 0 36px;
-  border: 0; background: var(--soft); color: var(--plum);
+  border: 1px solid var(--mist); background: var(--canvas); color: var(--plum);
   border-radius: var(--pill);
-  font-size: 20px; font-weight: 700; line-height: 1;
+  font-size: 19px; font-weight: 700; line-height: 1;
   display: grid; place-items: center; padding: 0; cursor: pointer;
-  transition: transform .12s var(--ease-spring), background .18s ease, color .18s ease;
+  transition: transform .16s var(--ease-spring), background .18s ease,
+              color .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-.step:hover { background: var(--mist); }
-.step:active { transform: scale(.86); background: var(--plum); color: #fff; }
+.step:hover {
+  background: var(--violet); border-color: var(--violet); color: #fff;
+  transform: scale(1.12);
+  box-shadow: 0 4px 12px -2px rgba(171, 47, 237, .45);
+}
+.step:active { transform: scale(.88); background: var(--plum); border-color: var(--plum); }
 
-/* --soft is too close to white to read as an empty track at 0 */
-.bar { height: 10px; background: var(--mist); border-radius: var(--pill); overflow: hidden; }
+.bar { position: relative; height: 10px; background: var(--mist); border-radius: var(--pill); overflow: hidden; }
 .bar i {
   display: block; height: 100%; border-radius: var(--pill);
   background: var(--violet);
-  transition: width .55s var(--ease-spring), background-color .3s ease;
+  transition: width .75s var(--ease-spring), background-color .35s ease;
 }
 .metric[data-hit="1"] .bar i { background: var(--good); }
+/* a highlight travels the filled portion while it is short of target */
+.bar i::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  transform: translateX(-100%);
+  animation: sheen 2.4s ease-in-out infinite;
+}
+.metric[data-hit="1"] .bar i::after { animation: none; }
+@keyframes sheen { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(300%); } }
+
+/* ==========================================================================
+   The other four — liquid meters on white, no tinted blocks
+   ========================================================================== */
+
+.minis { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (min-width: 640px) { .minis { grid-template-columns: repeat(4, 1fr); } }
+
+.mini {
+  position: relative;
+  background: var(--canvas);
+  border: 1px solid var(--mist);
+  border-radius: var(--r-md);
+  padding: 16px 14px 14px;
+  overflow: hidden;
+  transition: border-color .3s ease, box-shadow .3s ease, transform .3s var(--ease-spring);
+}
+.mini:hover { transform: translateY(-3px); box-shadow: var(--lift); }
+.mini .name {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); display: block; line-height: 1.35; min-height: 2.7em;
+}
+.mini .v {
+  font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1;
+  letter-spacing: -.03em; color: var(--c); display: block; margin: 10px 0 3px;
+  font-variant-numeric: tabular-nums;
+}
+.mini .of { font-size: 11px; font-weight: 600; color: var(--muted); display: block; }
+
+.jar {
+  position: relative; margin-top: 14px; height: 64px;
+  border-radius: var(--r-sm); overflow: hidden;
+}
+.jar svg { display: block; width: 100%; height: 100%; }
+/* keeps an empty jar reading as a container rather than a blank patch */
+.jar::after {
+  content: ''; position: absolute; inset: 0;
+  border: 1px solid var(--c); opacity: .28;
+  border-radius: var(--r-sm); pointer-events: none;
+}
+
+.mini.hit { border-color: var(--c); }
+.mini .flag {
+  position: absolute; top: 12px; right: 12px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--c); color: #fff;
+  display: grid; place-items: center;
+  transform: scale(0); transition: transform .45s var(--ease-spring);
+}
+.mini.hit .flag { transform: scale(1); }
+.mini .flag svg { width: 12px; height: 12px; }
+
+/* ==========================================================================
+   Pace chart
+   ========================================================================== */
+
+.ramp svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.ramp .grid-line { stroke: var(--mist); stroke-width: 1; }
+.ramp .axis-text { font-family: var(--body); font-size: 9px; font-weight: 600; fill: var(--muted); }
+.ramp .now-line { stroke: var(--mist); stroke-width: 1.5; }
+.ramp .now-text { font-family: var(--body); font-size: 9px; font-weight: 700; fill: var(--muted); letter-spacing: .1em; }
+
+.legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.legend span { background: var(--soft); border-radius: var(--pill); padding: 6px 12px; }
+.swatch { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 7px; vertical-align: 2px; }
+.swatch--target { background: #cbb8e4; }
+.swatch--actual { background: linear-gradient(90deg, #8a1fd0, #ff60f0); }
+
+.ramp-wrap { position: relative; }
+.ramp .hover-line { stroke: var(--plum); stroke-width: 1; opacity: .22; }
+.tip {
+  position: absolute; pointer-events: none; z-index: 20;
+  background: var(--plum); color: #fff;
+  border-radius: var(--r-md); padding: 10px 13px;
+  font-size: 12px; line-height: 1.5; white-space: nowrap;
+  box-shadow: var(--lift-2);
+  opacity: 0; transform: translate(-50%, -118%) scale(.94);
+  transition: opacity .16s ease, transform .16s var(--ease-out);
+}
+.tip.on { opacity: 1; transform: translate(-50%, -128%) scale(1); }
+.tip b { font-variant-numeric: tabular-nums; }
+.tip .t-behind { color: #ff9f97; }
+.tip .t-ahead { color: #7ee6c0; }
 
 /* ==========================================================================
    Revenue
@@ -463,12 +471,6 @@ html.has-cursor summary { cursor: none; }
   font-variant-numeric: tabular-nums;
 }
 .money small { font-family: var(--body); font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--muted); }
-.pace-chip {
-  font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
-  padding: 8px 16px; border-radius: var(--pill); display: inline-block; margin-top: 14px;
-}
-.pace-chip[data-s="ahead"] { background: var(--good-tint); color: #0a6b4d; }
-.pace-chip[data-s="behind"] { background: var(--bad-tint); color: var(--bad); }
 
 .row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 input[type=text], input[type=number], input[type=email], textarea {
@@ -502,32 +504,35 @@ textarea { resize: vertical; min-height: 76px; }
 .del:hover { color: var(--bad); transform: scale(1.2) rotate(90deg); }
 
 /* ==========================================================================
-   Buttons — plum fill, hard shadow that collapses under the press
+   Buttons — lift on hover, depress on press. No wipes.
    ========================================================================== */
 
 .btn {
-  position: relative; overflow: hidden;
   border: 0; background: var(--plum); color: #fff;
   padding: 13px 22px; border-radius: var(--r-md);
   font-family: var(--body); font-size: 14px; font-weight: 600;
   cursor: pointer;
-  --shadow-color: #12041c;
-  box-shadow: var(--hard);
-  transition: transform .12s var(--ease-out), box-shadow .12s var(--ease-out);
+  box-shadow: 0 2px 0 0 #12041c;
+  transition: transform .18s var(--ease-out), box-shadow .18s var(--ease-out),
+              background-color .22s ease;
 }
-.btn > span { position: relative; z-index: 1; }
-/* violet wipes across from the left on hover */
-.btn::before {
-  content: ''; position: absolute; inset: 0;
+.btn:hover {
   background: var(--violet);
-  transform: scaleX(0); transform-origin: left;
-  transition: transform .38s var(--ease-out);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 0 #7c1cad, 0 10px 20px -8px rgba(171, 47, 237, .6);
 }
-.btn:hover::before { transform: scaleX(1); }
-.btn:active { transform: translateY(3px); box-shadow: 0 0 0 0 var(--shadow-color); }
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 0 #12041c;
+  transition-duration: .06s;
+}
 
-.btn.ghost { background: var(--wash); color: var(--plum); --shadow-color: #b79ae0; }
-.btn.ghost::before { background: var(--bloom); }
+.btn.ghost { background: var(--wash); color: var(--plum); box-shadow: 0 2px 0 0 #b79ae0; }
+.btn.ghost:hover {
+  background: var(--bloom); color: var(--plum);
+  box-shadow: 0 4px 0 0 #c79ad0, 0 10px 20px -8px rgba(233, 189, 237, .8);
+}
+.btn.ghost:active { box-shadow: 0 0 0 0 #b79ae0; }
 .btn.wide { width: 100%; }
 .btn.sm { font-size: 13px; padding: 9px 14px; }
 
@@ -556,17 +561,16 @@ details { border-top: 1px solid var(--mist); padding-top: 16px; margin-top: 6px;
 details:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
 summary {
   cursor: pointer; list-style: none;
-  padding: 6px 0; position: relative; padding-right: 26px;
+  padding: 6px 26px 6px 0; position: relative;
   transition: color .18s ease;
 }
 summary:hover { color: var(--violet); }
 summary::-webkit-details-marker { display: none; }
-/* chevron that flips when the section opens */
 summary::after {
   content: ''; position: absolute; right: 4px; top: 50%;
   width: 7px; height: 7px; margin-top: -5px;
   border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
-  transform: rotate(45deg); transform-origin: center;
+  transform: rotate(45deg);
   transition: transform .25s var(--ease-spring);
 }
 details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
@@ -579,29 +583,26 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
    Sync
    ========================================================================== */
 
-.sync-bar {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  margin-top: 20px; flex-wrap: wrap;
-}
+.sync-bar { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 .chip {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 600; color: var(--muted);
   background: var(--soft); border-radius: var(--pill); padding: 7px 14px;
 }
 .chip .led { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
-.chip[data-s="synced"] .led { background: var(--good); }
+.chip[data-s="synced"]  .led { background: var(--good); }
 .chip[data-s="syncing"] .led { background: var(--blue); animation: blink 1s ease-in-out infinite; }
-.chip[data-s="local"]  .led { background: #d9a400; }
-.chip[data-s="error"]  .led { background: var(--bad); }
+.chip[data-s="local"]   .led { background: #d9a400; }
+.chip[data-s="error"]   .led { background: var(--bad); }
 @keyframes blink { 50% { opacity: .25; } }
 
 .link-btn {
   background: none; border: 0; padding: 0;
-  color: var(--violet); font-family: var(--body); font-size: 12px; font-weight: 600;
+  color: var(--violet); font-family: var(--body);
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
   cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
 }
 
-/* celebration particles */
 .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 9998; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -610,45 +611,65 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
   }
+  .reveal { opacity: 1; transform: none; }
+  .rt i { transform: none; }
 }
 
 @media (max-width: 420px) {
   .wrap { padding: 0 14px; }
   .card { padding: 18px; }
-  .streaks { gap: 12px; }
-  .streak { padding: 18px; }
+  .daterow { gap: 10px; font-size: 10px; }
+  .pace-chip { font-size: 11.5px; padding: 7px 12px; }
 }
 </style>
 </head>
 <body>
 
 <div class="cursor" aria-hidden="true"></div>
-<div class="cursor-dot" aria-hidden="true"></div>
 
-<!-- ============ MASTHEAD: the 26-week clock ============ -->
-<header class="mast">
+<!-- ============ TOP NAV: the 26-week clock, and the week selector ============ -->
+<header class="topbar">
   <div class="wrap">
-    <div class="label" id="datum">loading</div>
-    <h1 id="mast-title">Week —</h1>
-    <div class="mast-row">
-      <div class="mast-meta">
-        <span class="label" id="remaining"></span>
-        <span class="label" id="deadline"></span>
-      </div>
-      <span class="mast-pace num" id="mast-pace">—</span>
+    <div class="topbar-row">
+      <button class="wknav" id="wk-prev" type="button" aria-label="Previous week">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+
+      <h1 class="wk-title" id="wk-title" data-reveal-text>Week 1</h1>
+      <span class="wk-of" id="wk-of">of 26</span>
+
+      <button class="wknav" id="wk-next" type="button" aria-label="Next week">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+
+      <span class="pace-chip num" id="mast-pace">—</span>
     </div>
-    <div class="rail" id="rail" aria-hidden="true"></div>
+
+    <!-- One notch per week. Filled portion is the aurora gradient, so the
+         brand colour marks progress instead of sitting in a banner. -->
+    <div class="rail" id="rail">
+      <div class="rail-fill" id="rail-fill"></div>
+      <div class="rail-ticks" aria-hidden="true"></div>
+      <div class="rail-hits" id="rail-hits" role="tablist" aria-label="Jump to week"></div>
+    </div>
   </div>
 </header>
 
 <div class="wrap">
 
+  <div class="daterow">
+    <span id="datum">loading</span>
+    <span id="remaining"></span>
+    <span id="deadline"></span>
+    <button class="link-btn" id="back-now" type="button" hidden>Back to this week</button>
+  </div>
+
   <!-- ============ TODAY ============ -->
-  <section class="card" id="today-card">
+  <section class="card reveal" id="today-card">
     <div class="card-head">
       <div>
         <span class="label">Today</span>
-        <h2>Non-negotiable</h2>
+        <h2 data-reveal-text>Non-negotiable</h2>
       </div>
       <div class="today-ring">
         <svg viewBox="0 0 44 44" aria-hidden="true">
@@ -662,27 +683,31 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
     <div id="today"></div>
   </section>
 
-  <!-- ============ STREAKS ============ -->
-  <section class="streaks">
-    <div class="streak">
-      <span class="label">Calling streak</span>
-      <span class="big num" id="streak-days">0</span>
-      <span class="unit">days unbroken</span>
-      <span class="spark" aria-hidden="true">🔥</span>
+  <!-- ============ PACE CHART ============ -->
+  <section class="card ramp reveal">
+    <div class="card-head">
+      <div>
+        <span class="label">Revenue vs. pace</span>
+        <h2 id="ramp-pct" data-reveal-text>—</h2>
+      </div>
+      <span class="label num" id="rev-target"></span>
     </div>
-    <div class="streak">
-      <span class="label">Conversations</span>
-      <span class="big num" id="streak-touch">0</span>
-      <span class="unit">had, all-time</span>
+    <div class="ramp-wrap" id="ramp-wrap">
+      <svg id="ramp" aria-label="Revenue against target pace over 26 weeks" role="img"></svg>
+      <div class="tip" id="ramp-tip" aria-hidden="true"></div>
+    </div>
+    <div class="legend">
+      <span><i class="swatch swatch--target"></i>where you should be</span>
+      <span><i class="swatch swatch--actual"></i>where you are</span>
     </div>
   </section>
 
   <!-- ============ WEEKLY INPUTS ============ -->
-  <section class="card">
+  <section class="card reveal">
     <div class="card-head">
       <div>
-        <span class="label">This week</span>
-        <h2>The inputs</h2>
+        <span class="label" id="inputs-eyebrow">This week</span>
+        <h2 data-reveal-text>The inputs</h2>
       </div>
       <span class="label" id="week-window"></span>
     </div>
@@ -690,54 +715,35 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
   </section>
 
   <!-- ============ THE OTHER FOUR ============ -->
-  <section class="card">
+  <section class="card reveal">
     <div class="card-head">
       <div>
         <span class="label">By week</span>
-        <h2>The other four</h2>
+        <h2 data-reveal-text>The other four</h2>
       </div>
     </div>
     <div class="minis" id="minis"></div>
   </section>
 
-  <!-- ============ PACE CHART ============ -->
-  <section class="card ramp">
-    <div class="card-head">
-      <div>
-        <span class="label">Revenue vs. pace</span>
-        <h2 id="ramp-pct">—</h2>
-      </div>
-    </div>
-    <div class="ramp-wrap" id="ramp-wrap">
-      <svg id="ramp" aria-label="Revenue against target pace over 26 weeks" role="img"></svg>
-      <div class="tip" id="ramp-tip" aria-hidden="true"></div>
-    </div>
-    <div class="legend">
-      <span><i class="swatch" style="background:#b9a3d6"></i>where you should be</span>
-      <span><i class="swatch" style="background:#8a1fd0"></i>where you are</span>
-    </div>
-  </section>
-
   <!-- ============ REVENUE ============ -->
-  <section class="card">
+  <section class="card reveal">
     <div class="card-head">
       <div>
         <span class="label">Revenue booked</span>
       </div>
-      <span class="label num" id="rev-target"></span>
     </div>
     <div class="money" id="rev-total">$0<small> / $100,000</small></div>
-    <div><span class="pace-chip" id="pace">—</span></div>
+    <div><span class="pace-chip pace-chip--solid" id="pace">—</span></div>
     <div class="row">
       <input type="number" id="amt" placeholder="Amount" inputmode="decimal" aria-label="Amount" style="flex:1 1 110px;width:auto">
       <input type="text" id="who" placeholder="Client / what for" aria-label="Client or what for" style="flex:2 1 150px;width:auto">
-      <button class="btn" id="log-rev"><span>Log it</span></button>
+      <button class="btn" id="log-rev" type="button"><span>Log it</span></button>
     </div>
     <div class="ledger" id="ledger"></div>
   </section>
 
   <!-- ============ SUNDAY REVIEW ============ -->
-  <section class="card">
+  <section class="card reveal">
     <div class="card-head">
       <div>
         <span class="label">Sunday review</span>
@@ -756,22 +762,22 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
       <label class="label" for="r-change">One change for next week</label>
       <textarea id="r-change" data-k="change"></textarea>
     </div>
-    <button class="btn ghost wide" id="make-agenda"><span>Build the 1:1 agenda</span></button>
+    <button class="btn ghost wide" id="make-agenda" type="button"><span>Build the 1:1 agenda</span></button>
     <div class="agenda" id="agenda" hidden></div>
   </section>
 
   <!-- ============ ADJUST + SYNC ============ -->
-  <section class="card">
+  <section class="card reveal">
     <details>
       <summary class="label">Adjust the plan</summary>
       <div style="margin-top:18px">
         <div class="label" style="margin-bottom:10px">Daily non-negotiables</div>
         <div id="edit-daily"></div>
-        <button class="btn ghost sm" id="add-daily"><span>+ Add daily</span></button>
+        <button class="btn ghost sm" id="add-daily" type="button"><span>+ Add daily</span></button>
 
         <div class="label" style="margin:22px 0 10px">Weekly targets</div>
         <div id="edit-weekly"></div>
-        <button class="btn ghost sm" id="add-weekly"><span>+ Add weekly</span></button>
+        <button class="btn ghost sm" id="add-weekly" type="button"><span>+ Add weekly</span></button>
 
         <p class="note">Change targets on Sundays, not on Wednesdays when you're behind. That's the whole point of the friend.</p>
       </div>
@@ -792,23 +798,23 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
           <label class="label" for="sb-key">Anon key</label>
           <input type="text" id="sb-key" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false">
         </div>
-        <button class="btn sm" id="sb-save"><span>Save keys</span></button>
+        <button class="btn sm" id="sb-save" type="button"><span>Save keys</span></button>
 
         <div id="sb-auth" style="margin-top:22px">
           <div class="field">
             <label class="label" for="sb-email">Your email</label>
             <input type="email" id="sb-email" placeholder="you@example.com" autocomplete="email">
           </div>
-          <button class="btn sm" id="sb-signin"><span>Email me a sign-in link</span></button>
-          <button class="btn ghost sm" id="sb-signout" hidden><span>Sign out</span></button>
+          <button class="btn sm" id="sb-signin" type="button"><span>Email me a sign-in link</span></button>
+          <button class="btn ghost sm" id="sb-signout" type="button" hidden><span>Sign out</span></button>
         </div>
 
         <p class="note" id="sb-msg"></p>
 
         <div class="label" style="margin:22px 0 10px">Backup</div>
         <div class="row" style="margin-top:0">
-          <button class="btn ghost sm" id="export"><span>Export JSON</span></button>
-          <button class="btn ghost sm" id="import-btn"><span>Import JSON</span></button>
+          <button class="btn ghost sm" id="export" type="button"><span>Export JSON</span></button>
+          <button class="btn ghost sm" id="import-btn" type="button"><span>Import JSON</span></button>
           <input type="file" id="import" accept="application/json,.json" hidden>
         </div>
       </div>
@@ -1261,9 +1267,8 @@ window.Store = (function () {
 /* ==========================================================================
    Hand-rolled SVG charts. No chart library.
 
-   Two pieces:
      ramp()   — revenue against the target pace across 26 weeks
-     meters() — "the other four", as liquid jars that fill toward the target
+     meter()  — "the other four", as liquid jars that fill toward the target
    ========================================================================== */
 
 window.Charts = (function () {
@@ -1274,6 +1279,12 @@ window.Charts = (function () {
 
   function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
 
+  function tag(name, attrs) {
+    var e = document.createElementNS(NS, name);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    return e;
+  }
+
   /* ------------------------------------------------------------------
      Monotone cubic interpolation.
 
@@ -1283,12 +1294,12 @@ window.Charts = (function () {
      so a cumulative series only ever rises.
      ------------------------------------------------------------------ */
   function monotonePath(pts) {
-    var n = pts.length;
+    var n = pts.length, i;
     if (n === 0) return '';
     if (n === 1) return 'M' + pts[0][0] + ',' + pts[0][1];
     if (n === 2) return 'M' + pts[0][0] + ',' + pts[0][1] + 'L' + pts[1][0] + ',' + pts[1][1];
 
-    var dx = [], dy = [], m = [], i;
+    var dx = [], dy = [], m = [];
     for (i = 0; i < n - 1; i++) {
       dx[i] = pts[i + 1][0] - pts[i][0];
       dy[i] = pts[i + 1][1] - pts[i][1];
@@ -1318,10 +1329,17 @@ window.Charts = (function () {
     return d;
   }
 
-  function tag(name, attrs) {
-    var e = document.createElementNS(NS, name);
-    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
-    return e;
+  /* Walk the path by arc length to find the point at a given x. The curve is
+     monotone in x, so a bisection converges — this is what lets the hover dot
+     sit exactly on the line instead of near it. */
+  function pointAtX(path, targetX) {
+    var lo = 0, hi = path.getTotalLength(), p = path.getPointAtLength(0);
+    for (var i = 0; i < 22; i++) {
+      var mid = (lo + hi) / 2;
+      p = path.getPointAtLength(mid);
+      if (p.x < targetX) lo = mid; else hi = mid;
+    }
+    return p;
   }
 
   /* ==================================================================
@@ -1331,13 +1349,10 @@ window.Charts = (function () {
   var rampDrawn = false;
 
   function ramp(svg, opts) {
-    /* Axis text is sized in viewBox units, so a 520-wide box squeezed into a
-       350px phone renders 9px type at ~6px. Narrow screens get a squarer box
-       instead, which scales the same type back up to legible. */
     var narrow = (svg.getBoundingClientRect().width || 520) < 430;
     var W = narrow ? 380 : 520;
-    var H = narrow ? 250 : 200;
-    var L = narrow ? 42 : 48, R = 10, T = 12, B = 30;
+    var H = narrow ? 250 : 210;
+    var L = narrow ? 42 : 48, R = 12, T = 14, B = 30;
     var WEEKS = opts.weeks, max = opts.target, cur = opts.currentWeek;
 
     var x = function (w) { return L + (w / WEEKS) * (W - L - R); };
@@ -1346,53 +1361,60 @@ window.Charts = (function () {
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     svg.innerHTML = '';
 
+    /* The actual line only spans weeks 0..now, so map its gradient to that
+       span in user space. Left at objectBoundingBox across the full chart it
+       would render as one flat dark purple until the very last weeks. */
+    var lineEndX = x(Math.min(cur + 1, WEEKS));
+
     var defs = tag('defs');
     defs.innerHTML =
-      '<linearGradient id="actualWash" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0%" stop-color="#8a1fd0" stop-opacity=".30"/>' +
-        '<stop offset="100%" stop-color="#8a1fd0" stop-opacity="0"/>' +
+      '<linearGradient id="lineGrad" gradientUnits="userSpaceOnUse" ' +
+        'x1="' + x(0) + '" y1="0" x2="' + lineEndX + '" y2="0">' +
+        '<stop offset="0%" stop-color="#5b23c9"/>' +
+        '<stop offset="55%" stop-color="#c22ee0"/>' +
+        '<stop offset="100%" stop-color="#ff60f0"/>' +
       '</linearGradient>' +
-      '<linearGradient id="targetWash" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0%" stop-color="#decaff" stop-opacity=".55"/>' +
+      '<linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#a62fe0" stop-opacity=".30"/>' +
+        '<stop offset="60%" stop-color="#c852ff" stop-opacity=".10"/>' +
+        '<stop offset="100%" stop-color="#ff60f0" stop-opacity="0"/>' +
+      '</linearGradient>' +
+      '<linearGradient id="targetGrad" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#decaff" stop-opacity=".42"/>' +
         '<stop offset="100%" stop-color="#decaff" stop-opacity="0"/>' +
-      '</linearGradient>';
+      '</linearGradient>' +
+      '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%">' +
+        '<feGaussianBlur stdDeviation="4" result="b"/>' +
+        '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+      '</filter>';
     svg.appendChild(defs);
 
     /* horizontal guides at 0/25/50/75/100% */
     [0, .25, .5, .75, 1].forEach(function (f) {
       var yy = y(max * f);
-      svg.appendChild(tag('line', {
-        x1: L, y1: yy.toFixed(1), x2: W - R, y2: yy.toFixed(1), class: 'grid-line'
-      }));
+      svg.appendChild(tag('line', { x1: L, y1: yy.toFixed(1), x2: W - R, y2: yy.toFixed(1), class: 'grid-line' }));
       var t = tag('text', { x: L - 9, y: (yy + 3.5).toFixed(1), 'text-anchor': 'end', class: 'axis-text' });
       t.textContent = f === 0 ? '0' : '$' + Math.round(max * f / 1000) + 'k';
       svg.appendChild(t);
     });
 
-    /* month boundaries */
-    for (var i = 1; i < 6; i++) {
-      var mx = x(i * WEEKS / 6);
-      svg.appendChild(tag('line', {
-        x1: mx.toFixed(1), y1: T, x2: mx.toFixed(1), y2: H - B, class: 'month-line'
-      }));
-    }
-
-    /* --- target ramp: dashed, across all 26 weeks --- */
-    var tgt = [];
+    /* --- target ramp: one continuous soft line, no dashes --- */
+    var tgt = [], i;
     for (i = 0; i <= WEEKS; i++) tgt.push([x(i), y(opts.targetAt(i))]);
     var tgtD = monotonePath(tgt);
 
     svg.appendChild(tag('path', {
       d: tgtD + 'L' + x(WEEKS).toFixed(2) + ',' + y(0).toFixed(2) +
          'L' + x(0).toFixed(2) + ',' + y(0).toFixed(2) + 'Z',
-      fill: 'url(#targetWash)'
+      fill: 'url(#targetGrad)'
     }));
-    svg.appendChild(tag('path', {
-      d: tgtD, fill: 'none', stroke: '#b9a3d6', 'stroke-width': 2.5,
-      'stroke-dasharray': '7 5', 'stroke-linecap': 'round'
-    }));
+    var tgtLine = tag('path', {
+      d: tgtD, fill: 'none', stroke: '#bda6db', 'stroke-width': 2.25,
+      'stroke-linecap': 'round'
+    });
+    svg.appendChild(tgtLine);
 
-    /* --- actual: solid, stops at NOW, never extrapolates --- */
+    /* --- actual: solid gradient line, stops at NOW, never extrapolates --- */
     var act = [[x(0), y(0)]], run = 0;
     for (i = 0; i <= cur && i < WEEKS; i++) {
       run += opts.byWeek[i] || 0;
@@ -1404,17 +1426,25 @@ window.Charts = (function () {
     var fill = tag('path', {
       d: actD + 'L' + last[0].toFixed(2) + ',' + y(0).toFixed(2) +
          'L' + x(0).toFixed(2) + ',' + y(0).toFixed(2) + 'Z',
-      fill: 'url(#actualWash)'
+      fill: 'url(#areaGrad)'
     });
     svg.appendChild(fill);
 
+    /* Glow goes on a blurred copy underneath. Filtering the stroke itself
+       softens the whole line and it stops reading as crisp. */
+    svg.appendChild(tag('path', {
+      d: actD, fill: 'none', stroke: 'url(#lineGrad)', 'stroke-width': 7,
+      'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+      filter: 'url(#glow)', opacity: '.34'
+    }));
+
     var line = tag('path', {
-      d: actD, fill: 'none', stroke: '#8a1fd0', 'stroke-width': 3.5,
+      d: actD, fill: 'none', stroke: 'url(#lineGrad)', 'stroke-width': 4,
       'stroke-linejoin': 'round', 'stroke-linecap': 'round'
     });
     svg.appendChild(line);
 
-    /* NOW marker */
+    /* NOW marker — a plain hairline, so the only dashes on the chart are none */
     var nx = x(Math.min(cur + 1, WEEKS));
     svg.appendChild(tag('line', { x1: nx.toFixed(1), y1: T, x2: nx.toFixed(1), y2: H - B, class: 'now-line' }));
     var nowT = tag('text', { x: nx.toFixed(1), y: H - B + 16, 'text-anchor': 'middle', class: 'now-text' });
@@ -1423,16 +1453,16 @@ window.Charts = (function () {
 
     /* head of the actual line */
     var head = tag('circle', {
-      cx: last[0].toFixed(1), cy: last[1].toFixed(1), r: 6,
-      fill: '#8a1fd0', stroke: '#ffffff', 'stroke-width': 2.5
+      cx: last[0].toFixed(1), cy: last[1].toFixed(1), r: 5.5,
+      fill: '#ff60f0', stroke: '#ffffff', 'stroke-width': 2.5
     });
-    svg.appendChild(head);
     if (!reduced) {
-      var halo = tag('circle', { cx: last[0].toFixed(1), cy: last[1].toFixed(1), r: 6, fill: '#8a1fd0', opacity: '.35' });
-      halo.innerHTML = '<animate attributeName="r" values="6;15;6" dur="2.6s" repeatCount="indefinite"/>' +
-                       '<animate attributeName="opacity" values=".35;0;.35" dur="2.6s" repeatCount="indefinite"/>';
-      svg.insertBefore(halo, head);
+      var halo = tag('circle', { cx: last[0].toFixed(1), cy: last[1].toFixed(1), r: 6, fill: '#ff60f0', opacity: '.35' });
+      halo.innerHTML = '<animate attributeName="r" values="6;15;6" dur="2.8s" repeatCount="indefinite"/>' +
+                       '<animate attributeName="opacity" values=".35;0;.35" dur="2.8s" repeatCount="indefinite"/>';
+      svg.appendChild(halo);
     }
+    svg.appendChild(head);
 
     /* x labels — skipped where NOW would sit on top of them */
     [[0, 'wk 1', 'start'], [WEEKS / 2, 'wk 13', 'middle'], [WEEKS, 'wk 26', 'end']].forEach(function (p) {
@@ -1443,7 +1473,7 @@ window.Charts = (function () {
       svg.appendChild(t);
     });
 
-    /* --- draw-on animation, once per session --- */
+    /* --- draw-on, once per session --- */
     if (!reduced && !rampDrawn) {
       rampDrawn = true;
       var len = line.getTotalLength();
@@ -1452,18 +1482,18 @@ window.Charts = (function () {
       fill.style.opacity = 0;
       head.style.opacity = 0;
       requestAnimationFrame(function () {
-        line.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(.22,1,.36,1)';
+        line.style.transition = 'stroke-dashoffset 1.6s cubic-bezier(.22,1,.36,1)';
         line.style.strokeDashoffset = 0;
-        fill.style.transition = 'opacity .9s ease .45s';
+        fill.style.transition = 'opacity 1s ease .5s';
         fill.style.opacity = 1;
-        head.style.transition = 'opacity .4s ease 1.25s';
+        head.style.transition = 'opacity .4s ease 1.35s';
         head.style.opacity = 1;
       });
     }
 
-    /* --- hover scrubber --- */
+    /* --- hover: a dot that rides the line --- */
     var hoverLine = tag('line', { class: 'hover-line', y1: T, y2: H - B, opacity: 0 });
-    var hoverDot = tag('circle', { r: 5, fill: '#250835', stroke: '#fff', 'stroke-width': 2, opacity: 0 });
+    var hoverDot = tag('circle', { r: 6.5, fill: '#ffffff', stroke: '#8a1fd0', 'stroke-width': 3, opacity: 0 });
     svg.appendChild(hoverLine);
     svg.appendChild(hoverDot);
 
@@ -1471,6 +1501,7 @@ window.Charts = (function () {
     function at(clientX) {
       var box = svg.getBoundingClientRect();
       var vx = ((clientX - box.left) / box.width) * W;
+      vx = Math.max(L, Math.min(W - R, vx));
       var w = Math.round(((vx - L) / (W - L - R)) * WEEKS);
       w = Math.max(0, Math.min(WEEKS, w));
 
@@ -1478,12 +1509,16 @@ window.Charts = (function () {
       for (var k = 0; k < w && k < WEEKS; k++) actual += opts.byWeek[k] || 0;
       var want = opts.targetAt(w);
       var known = w <= cur + 1;
-      var px = x(w), py = y(known ? actual : want);
+
+      /* sample the curve itself so the dot sits on the stroke */
+      var px = x(w);
+      var pt = pointAtX(known ? line : tgtLine, px);
 
       hoverLine.setAttribute('x1', px); hoverLine.setAttribute('x2', px);
       hoverLine.setAttribute('opacity', 1);
-      hoverDot.setAttribute('cx', px); hoverDot.setAttribute('cy', py);
-      hoverDot.setAttribute('opacity', known ? 1 : 0);
+      hoverDot.setAttribute('cx', pt.x); hoverDot.setAttribute('cy', pt.y);
+      hoverDot.setAttribute('stroke', known ? '#8a1fd0' : '#cbb8e4');
+      hoverDot.setAttribute('opacity', 1);
 
       var gap = actual - want;
       tip.innerHTML =
@@ -1495,8 +1530,8 @@ window.Charts = (function () {
               money(Math.abs(gap)) + '</b> ' + (gap >= 0 ? 'ahead' : 'behind') + '</div>'
           : '<div style="opacity:.75">Pace <b>' + money(want) + '</b></div>');
 
-      tip.style.left = (box.left + (px / W) * box.width - opts.wrap.getBoundingClientRect().left) + 'px';
-      tip.style.top = ((py / H) * box.height) + 'px';
+      tip.style.left = ((box.left - opts.wrap.getBoundingClientRect().left) + (px / W) * box.width) + 'px';
+      tip.style.top = ((pt.y / H) * box.height) + 'px';
       tip.classList.add('on');
     }
     function off() {
@@ -1514,23 +1549,21 @@ window.Charts = (function () {
   /* ==================================================================
      Liquid meters — "the other four"
 
-     One rAF loop drives every jar. Each jar is two offset sine waves so
-     the surface reads as liquid rather than a single rolling curve; the
-     amplitude falls away as the jar approaches full, so a finished target
-     settles instead of sloshing forever.
+     One rAF loop drives every jar. Each is two offset sine waves so the
+     surface reads as liquid rather than one rolling curve; amplitude falls
+     away near full so a finished target settles instead of sloshing.
      ================================================================== */
 
   var jars = [];
   var rafId = null;
-  /* Levels survive a re-render. renderMinis() rebuilds these cards on every
-     tick of a counter; without this the liquid would drop to empty and
-     re-pour each time, which reads as a glitch rather than a fill. */
+  /* Levels survive a re-render. renderMinis() rebuilds these cards whenever a
+     counter ticks; without this the liquid would drop to empty and re-pour
+     each time, which reads as a glitch rather than a fill. */
   var levels = {};
 
   function jarPath(w, h, level, amp, phase, freq) {
     var d = 'M0,' + h.toFixed(1);
-    var step = 4;
-    for (var px = 0; px <= w; px += step) {
+    for (var px = 0; px <= w; px += 4) {
       var yy = level + Math.sin((px / w) * freq * Math.PI * 2 + phase) * amp;
       d += (px === 0 ? 'L0,' + yy.toFixed(2) : 'L' + px + ',' + yy.toFixed(2));
     }
@@ -1540,26 +1573,23 @@ window.Charts = (function () {
 
   function tick(ts) {
     jars.forEach(function (j) {
-      /* ease the level toward its target so a tick visibly pours in */
       j.level += (j.want - j.level) * 0.08;
       var h = j.h, w = j.w;
-      var y = h - j.level * h;
-      /* calm down near full, and never let the wave clip out of the jar */
-      var amp = Math.min(j.amp * (1 - Math.min(j.level, 1) * 0.55), Math.max(0, Math.min(y, h - y)));
+      var yy = h - j.level * h;
+      var amp = Math.min(j.amp * (1 - Math.min(j.level, 1) * 0.55), Math.max(0, Math.min(yy, h - yy)));
       var p = ts / 1000;
-      j.back.setAttribute('d', jarPath(w, h, y, amp * 0.7, p * 1.1 + 2.1, 1.6));
-      j.front.setAttribute('d', jarPath(w, h, y, amp, p * 1.7, 1.25));
+      j.back.setAttribute('d', jarPath(w, h, yy, amp * 0.7, p * 1.1 + 2.1, 1.6));
+      j.front.setAttribute('d', jarPath(w, h, yy, amp, p * 1.7, 1.25));
       levels[j.id] = j.level;
     });
     rafId = jars.length ? requestAnimationFrame(tick) : null;
   }
 
   function meter(host, o) {
-    var w = 100, h = 62;
+    var w = 100, h = 64;
     var svg = tag('svg', { viewBox: '0 0 ' + w + ' ' + h, preserveAspectRatio: 'none' });
 
-    var trough = tag('rect', { x: 0, y: 0, width: w, height: h, fill: o.color, opacity: '.10', rx: 3 });
-    svg.appendChild(trough);
+    svg.appendChild(tag('rect', { x: 0, y: 0, width: w, height: h, fill: o.color, opacity: '.09', rx: 3 }));
 
     var clipId = 'jar-' + o.id.replace(/[^a-z0-9]/gi, '');
     var defs = tag('defs');
@@ -1567,12 +1597,11 @@ window.Charts = (function () {
     svg.appendChild(defs);
 
     var g = tag('g', { 'clip-path': 'url(#' + clipId + ')' });
-    var back = tag('path', { fill: o.color, opacity: '.34' });
-    var front = tag('path', { fill: o.color, opacity: '.85' });
+    var back = tag('path', { fill: o.color, opacity: '.32' });
+    var front = tag('path', { fill: o.color, opacity: '.88' });
     g.appendChild(back);
     g.appendChild(front);
     svg.appendChild(g);
-
     host.appendChild(svg);
 
     var want = Math.max(0, Math.min(1.06, o.frac));
@@ -1583,12 +1612,11 @@ window.Charts = (function () {
       return;
     }
 
-    var j = {
+    jars.push({
       id: o.id, w: w, h: h,
       level: levels[o.id] !== undefined ? levels[o.id] : 0,
       want: want, amp: 2.6, back: back, front: front
-    };
-    jars.push(j);
+    });
     if (!rafId) rafId = requestAnimationFrame(tick);
   }
 
@@ -1617,6 +1645,10 @@ window.Charts = (function () {
   var reduced = Charts.reduced;
   var S;
 
+  /* Which week the page is showing. Defaults to the live one; the rail can
+     put it anywhere from week 1 to now. */
+  var view = 0;
+
   function el(id) { return document.getElementById(id); }
 
   /* ---------------- dates ---------------- */
@@ -1634,7 +1666,7 @@ window.Charts = (function () {
   }
   function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
   function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
-  function weekIndex() {
+  function currentWeek() {
     return Math.max(0, Math.floor(daysBetween(parseISO(S.start), lastSunday(new Date())) / 7));
   }
   function weekKey(i) { return 'w' + i; }
@@ -1660,13 +1692,10 @@ window.Charts = (function () {
     if (!w.rt) w.rt = {};
     return w;
   }
-  function liveRevenue() {
-    return S.revenue.filter(function (r) { return !r.del; });
-  }
+  function liveRevenue() { return S.revenue.filter(function (r) { return !r.del; }); }
 
   /* ---------------- pace math ---------------- */
 
-  /* Linear-interpolate the monthly cumulative ramp onto weeks 1..26. */
   function targetAtWeek(w) {
     var pos = w / (WEEKS / 6);
     if (pos <= 0) return 0;
@@ -1690,6 +1719,74 @@ window.Charts = (function () {
 
   function save() { Store.save(); }
 
+  /* ---------------- reveals ---------------- */
+
+  /* Split into per-word containers holding per-character spans, so words never
+     break across lines and the stagger still runs character by character. */
+  function splitText(node) {
+    if (node.dataset.split) return;
+    node.dataset.split = '1';
+    var text = node.textContent;
+    node.textContent = '';
+    var i = 0;
+    text.split(/(\s+)/).forEach(function (token) {
+      if (!token) return;
+      if (/^\s+$/.test(token)) { node.appendChild(document.createTextNode(' ')); return; }
+      var word = document.createElement('span');
+      word.className = 'rt';
+      token.split('').forEach(function (ch) {
+        var c = document.createElement('i');
+        c.textContent = ch;
+        c.style.transitionDelay = (i * 26) + 'ms';
+        i++;
+        word.appendChild(c);
+      });
+      node.appendChild(word);
+    });
+  }
+
+  function revealText(node) {
+    if (!node) return;
+    splitText(node);
+    requestAnimationFrame(function () { node.classList.add('rt-in'); });
+  }
+
+  function initReveals() {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+
+    if (reduced || !('IntersectionObserver' in window)) {
+      cards.forEach(function (c) { c.classList.add('in'); });
+      document.querySelectorAll('[data-reveal-text]').forEach(revealText);
+      return;
+    }
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in');
+        var h = e.target.querySelector('[data-reveal-text]');
+        if (h) setTimeout(function () { revealText(h); }, 140);
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
+
+    cards.forEach(function (c, i) {
+      /* above-the-fold cards come in on a stagger rather than on scroll */
+      if (i < 2) {
+        setTimeout(function () {
+          c.classList.add('in');
+          var h = c.querySelector('[data-reveal-text]');
+          if (h) setTimeout(function () { revealText(h); }, 140);
+        }, 220 + i * 130);
+      } else {
+        io.observe(c);
+      }
+    });
+
+    /* the hero line runs first, before anything else moves */
+    revealText(el('wk-title'));
+  }
+
   /* ---------------- number count-up ---------------- */
 
   function countUp(node, to, fmt) {
@@ -1708,38 +1805,81 @@ window.Charts = (function () {
   }
 
   /* ==================================================================
-     Masthead
+     Top nav
      ================================================================== */
 
-  function renderMast() {
-    var now = new Date(), w = weekIndex();
+  function renderTop() {
+    var now = new Date(), cur = currentWeek();
     var end = addDays(parseISO(S.start), WEEKS * 7 - 1);
 
+    var title = el('wk-title');
+    var want = 'Week ' + (view + 1);
+    /* only re-split when the text actually changes, or the reveal restarts */
+    if (title.dataset.text !== want) {
+      title.dataset.text = want;
+      if (title.dataset.split) {
+        title.textContent = want;
+        title.dataset.split = '';
+        splitText(title);
+        title.classList.add('rt-in');
+      } else {
+        title.textContent = want;
+      }
+    }
+    el('wk-of').textContent = 'of ' + WEEKS;
+
     el('datum').textContent = DAY[now.getDay()] + ' · ' + pretty(now);
-    el('mast-title').textContent = 'Week ' + Math.min(w + 1, WEEKS) + ' of ' + WEEKS;
     el('remaining').textContent = Math.max(0, daysBetween(now, end)) + ' days left';
     el('deadline').textContent = 'ends ' + pretty(end);
     el('week-window').textContent =
-      pretty(addDays(parseISO(S.start), w * 7)) + '–' + pretty(addDays(parseISO(S.start), w * 7 + 6));
-    el('review-when').textContent = 'week ' + (w + 1);
+      pretty(addDays(parseISO(S.start), view * 7)) + '–' + pretty(addDays(parseISO(S.start), view * 7 + 6));
+    el('review-when').textContent = 'week ' + (view + 1);
+    el('inputs-eyebrow').textContent = view === cur ? 'This week' : 'Week ' + (view + 1);
 
-    var diff = revenueTotal() - targetAtWeek(w + 1);
-    el('mast-pace').textContent =
-      (diff >= 0 ? money(diff) + ' ahead of pace' : money(-diff) + ' behind pace');
+    var diff = revenueTotal() - targetAtWeek(cur + 1);
+    var chip = el('mast-pace');
+    chip.dataset.s = diff >= 0 ? 'ahead' : 'behind';
+    chip.textContent = diff >= 0 ? money(diff) + ' ahead' : money(-diff) + ' behind';
 
-    /* one segment per week — the deadline, always in view */
-    var rail = el('rail');
-    if (rail.childElementCount !== WEEKS) {
-      rail.innerHTML = '';
+    /* rail: gradient fill to the live week, one clickable notch per week */
+    el('rail-fill').style.width = ((cur + 1) / WEEKS * 100) + '%';
+
+    var hits = el('rail-hits');
+    if (hits.childElementCount !== WEEKS) {
+      hits.innerHTML = '';
       for (var i = 0; i < WEEKS; i++) {
-        var s = document.createElement('i');
-        s.style.animationDelay = (i * 18) + 'ms';
-        rail.appendChild(s);
+        (function (n) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.setAttribute('role', 'tab');
+          b.title = 'Week ' + (n + 1);
+          b.setAttribute('aria-label', 'Week ' + (n + 1));
+          b.addEventListener('click', function () { go(n); });
+          hits.appendChild(b);
+        })(i);
       }
     }
-    Array.prototype.forEach.call(rail.children, function (node, i) {
-      node.className = i < w ? 'done' : (i === w ? 'now' : '');
+    Array.prototype.forEach.call(hits.children, function (b, i) {
+      b.disabled = i > cur;
+      b.setAttribute('aria-selected', i === view ? 'true' : 'false');
     });
+
+    el('wk-prev').disabled = view <= 0;
+    el('wk-next').disabled = view >= cur;
+    el('back-now').hidden = view === cur;
+
+    /* the daily list only makes sense for today */
+    el('today-card').style.display = view === cur ? '' : 'none';
+  }
+
+  function go(n) {
+    var cur = currentWeek();
+    view = Math.max(0, Math.min(cur, n));
+    renderTop();
+    renderMetrics();
+    renderMinis();
+    renderReview();
+    el('agenda').hidden = true;
   }
 
   /* ==================================================================
@@ -1780,7 +1920,6 @@ window.Charts = (function () {
 
         save();
         renderToday();
-        renderStreaks();
         renderMetrics();
         renderMinis();
 
@@ -1801,14 +1940,11 @@ window.Charts = (function () {
     return S.daily.length > 0 && S.daily.every(function (i) { return !!day.done[i.id]; });
   }
 
-  /* ==================================================================
-     Streaks
-     ================================================================== */
-
-  function renderStreaks() {
-    /* consecutive days the keystone call task was done. Today not being
-       done *yet* must not break it — otherwise the page tells you you've
-       failed every morning before you've started. */
+  /* Consecutive days the keystone call task was done. Today not being done
+     *yet* must not break it — otherwise the page tells you you've failed
+     every morning before you've started. Still reported in the agenda even
+     though the streak block is gone from the page. */
+  function callingStreak() {
     var run = 0, d = parseISO(S.start), today = new Date(), todayKey = iso(today);
     while (d <= today) {
       var key = iso(d), rec = S.days[key];
@@ -1816,14 +1952,7 @@ window.Charts = (function () {
       else if (key !== todayKey) run = 0;
       d = addDays(d, 1);
     }
-
-    var total = 0;
-    Object.keys(S.weeks).forEach(function (k) {
-      total += (S.weeks[k].counts || {})['w-conv'] || 0;
-    });
-
-    countUp(el('streak-days'), run);
-    countUp(el('streak-touch'), total, function (n) { return n.toLocaleString('en-US'); });
+    return run;
   }
 
   /* ==================================================================
@@ -1831,14 +1960,14 @@ window.Charts = (function () {
      ================================================================== */
 
   function bump(id, delta, step, silent) {
-    var w = weekRec(weekIndex());
+    var w = weekRec(view);
     w.counts[id] = Math.max(0, (w.counts[id] || 0) + delta * (step || 1));
     w.t[id] = Store.now();
-    if (!silent) { save(); renderMetrics(); renderMinis(); renderStreaks(); }
+    if (!silent) { save(); renderMetrics(); renderMinis(); }
   }
 
   function renderMetrics() {
-    var wk = weekRec(weekIndex());
+    var wk = weekRec(view);
     var host = el('metrics');
     host.innerHTML = '';
 
@@ -1854,8 +1983,15 @@ window.Charts = (function () {
           '<button class="step" type="button" data-d="-1" aria-label="Decrease">–</button>' +
           '<button class="step" type="button" data-d="1" aria-label="Increase">+</button>' +
         '</div>' +
-        '<div class="bar"><i style="width:' + Math.min(100, (v / m.target) * 100) + '%"></i></div>';
+        '<div class="bar"><i></i></div>';
       row.querySelector('.metric-name').textContent = m.label;
+
+      /* start at 0 and let the fill animate to width on the next frame */
+      var bar = row.querySelector('.bar i');
+      var pct = Math.min(100, (v / m.target) * 100);
+      if (reduced) bar.style.width = pct + '%';
+      else requestAnimationFrame(function () { bar.style.width = pct + '%'; });
+
       row.querySelectorAll('.step').forEach(function (btn) {
         btn.addEventListener('click', function () { bump(m.id, +btn.dataset.d); });
       });
@@ -1868,73 +2004,60 @@ window.Charts = (function () {
      ================================================================== */
 
   var MINIS = [
-    { id: 'w-cust', name: 'Customers signed', color: 'var(--s1)', hex: '#8a1fd0', tint: 'var(--s1-tint)', cumulative: true },
-    { id: 'w-show', name: 'Local walk-ins',   color: 'var(--s2)', hex: '#0283ec', tint: 'var(--s2-tint)' },
-    { id: 'w-gym',  name: 'Gym sessions',     color: 'var(--s3)', hex: '#0d9268', tint: 'var(--s3-tint)' },
-    { id: 'w-str',  name: 'Stranger convos',  color: 'var(--s4)', hex: '#f2661a', tint: 'var(--s4-tint)' }
+    { id: 'w-cust', name: 'Customers signed', hex: '#8a1fd0', cumulative: true },
+    { id: 'w-show', name: 'Local walk-ins',   hex: '#0283ec' },
+    { id: 'w-gym',  name: 'Gym sessions',     hex: '#d61f6d' },
+    { id: 'w-str',  name: 'Stranger convos',  hex: '#e07a00' }
   ];
 
   function renderMinis() {
-    var cur = weekIndex(), host = el('minis');
+    var host = el('minis');
     host.innerHTML = '';
     Charts.resetMeters();
 
     MINIS.forEach(function (m) {
       var def = S.weekly.filter(function (x) { return x.id === m.id; })[0] || { target: 1 };
 
-      /* per-week series, and the running total for the cumulative one */
-      var vals = [], run = 0, i;
-      for (i = 0; i <= cur; i++) {
-        var v = ((S.weeks[weekKey(i)] || {}).counts || {})[m.id] || 0;
-        run += v;
-        vals.push(m.cumulative ? run : v);
+      var nowVal = 0;
+      if (m.cumulative) {
+        for (var i = 0; i <= view; i++) {
+          nowVal += ((S.weeks[weekKey(i)] || {}).counts || {})[m.id] || 0;
+        }
+      } else {
+        nowVal = (weekRec(view).counts || {})[m.id] || 0;
       }
-      var nowVal = vals[vals.length - 1] || 0;
 
-      /* A cumulative jar fills toward the whole 26 weeks; a weekly one
-         fills toward this week's target. "Hit" for the cumulative one
-         means on pace, not finished — otherwise it never lights up. */
+      /* A cumulative jar fills toward the whole 26 weeks; a weekly one fills
+         toward that week's target. "Hit" for the cumulative one means on
+         pace, not finished — otherwise it would never light up. */
       var frac, hit, caption;
       if (m.cumulative) {
         var allTime = def.target * WEEKS;
         frac = allTime ? nowVal / allTime : 0;
-        hit = nowVal >= def.target * (cur + 1);
+        hit = nowVal >= def.target * (view + 1);
         caption = 'of ' + allTime + ' by week ' + WEEKS;
       } else {
         frac = def.target ? nowVal / def.target : 0;
         hit = nowVal >= def.target;
-        caption = 'of ' + def.target + ' this week';
+        caption = 'of ' + def.target + (view === currentWeek() ? ' this week' : ' that week');
       }
 
       var card = document.createElement('div');
       card.className = 'mini' + (hit ? ' hit' : '');
-      card.style.setProperty('--c', m.color);
-      card.style.setProperty('--tint', m.tint);
+      card.style.setProperty('--c', m.hex);
       card.innerHTML =
         '<span class="name"></span>' +
-        '<span class="v num">' + nowVal + '</span>' +
+        '<span class="v">' + nowVal + '</span>' +
         '<span class="of"></span>' +
         '<div class="jar"></div>' +
-        '<div class="spark-row"></div>' +
         '<span class="flag"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="3" ' +
           'stroke-linecap="round" stroke-linejoin="round"><path d="' + CHECK + '"/></svg></span>';
       card.querySelector('.name').textContent = m.name;
       card.querySelector('.of').textContent = caption;
 
-      /* No separate target line: the jar is scaled so that full *is* the
-         target, which is a stronger signal than a hairline near the rim. */
+      /* The jar is scaled so that full *is* the target — a stronger signal
+         than a hairline near the rim. */
       Charts.meter(card.querySelector('.jar'), { id: m.id, color: m.hex, frac: frac });
-
-      /* weekly history under the jar */
-      var sparks = card.querySelector('.spark-row');
-      var peak = Math.max.apply(null, vals.concat([m.cumulative ? 1 : def.target, 1]));
-      var series = vals.slice(-WEEKS);
-      series.forEach(function (v, k) {
-        var bar = document.createElement('i');
-        bar.style.height = Math.max(2, (v / peak) * 18) + 'px';
-        if (k === series.length - 1) bar.className = 'last';
-        sparks.appendChild(bar);
-      });
 
       host.appendChild(card);
     });
@@ -1948,7 +2071,7 @@ window.Charts = (function () {
     Charts.ramp(el('ramp'), {
       weeks: WEEKS,
       target: S.target,
-      currentWeek: weekIndex(),
+      currentWeek: currentWeek(),
       byWeek: revenueByWeek(),
       targetAt: targetAtWeek,
       tip: el('ramp-tip'),
@@ -1956,6 +2079,8 @@ window.Charts = (function () {
     });
     el('ramp-pct').textContent =
       Math.round(revenueTotal() / S.target * 100) + '% of ' + money(S.target).replace(',000', 'k');
+    el('rev-target').textContent =
+      'week ' + Math.min(currentWeek() + 1, WEEKS) + ' pace: ' + money(targetAtWeek(currentWeek() + 1));
   }
 
   /* ==================================================================
@@ -1963,11 +2088,10 @@ window.Charts = (function () {
      ================================================================== */
 
   function renderRevenue() {
-    var total = revenueTotal(), w = weekIndex() + 1;
+    var total = revenueTotal(), w = currentWeek() + 1;
     var due = targetAtWeek(w), diff = total - due;
 
     el('rev-total').innerHTML = money(total) + '<small> / ' + money(S.target) + '</small>';
-    el('rev-target').textContent = 'week ' + Math.min(w, WEEKS) + ' pace: ' + money(due);
 
     var p = el('pace');
     p.dataset.s = diff >= 0 ? 'ahead' : 'behind';
@@ -1989,7 +2113,7 @@ window.Charts = (function () {
           r.del = 1;
           r.t = Store.now();
           save();
-          renderRevenue(); renderRamp(); renderMast();
+          renderRevenue(); renderRamp(); renderTop();
         });
         host.appendChild(row);
       });
@@ -2008,8 +2132,8 @@ window.Charts = (function () {
     el('amt').value = '';
     el('who').value = '';
     save();
-    renderRevenue(); renderRamp(); renderMast();
-    if (!reduced) celebrate(28);
+    renderRevenue(); renderRamp(); renderTop();
+    celebrate(28);
   }
 
   /* ==================================================================
@@ -2017,13 +2141,13 @@ window.Charts = (function () {
      ================================================================== */
 
   function renderReview() {
-    var wk = weekRec(weekIndex());
+    var wk = weekRec(view);
     ['won', 'missed', 'change'].forEach(function (k) {
       var t = document.querySelector('[data-k="' + k + '"]');
       if (document.activeElement === t) return;   /* don't fight the caret mid-sync */
       t.value = wk.review[k] || '';
       t.oninput = function () {
-        var live = weekRec(weekIndex());
+        var live = weekRec(view);
         live.review[k] = t.value;
         live.rt[k] = Store.now();
         save();
@@ -2032,9 +2156,9 @@ window.Charts = (function () {
   }
 
   function buildAgenda() {
-    var w = weekIndex(), wk = weekRec(w);
-    var total = revenueTotal(), due = targetAtWeek(w + 1), ahead = total >= due;
-    var h = '<div class="ag-head">Week ' + (w + 1) + ' of ' + WEEKS + ' &middot; ' + pretty(new Date()) + '</div>';
+    var wk = weekRec(view);
+    var total = revenueTotal(), due = targetAtWeek(view + 1), ahead = total >= due;
+    var h = '<div class="ag-head">Week ' + (view + 1) + ' of ' + WEEKS + ' &middot; ' + pretty(new Date()) + '</div>';
 
     function row(label, val, hit) {
       var d = document.createElement('div');
@@ -2049,7 +2173,7 @@ window.Charts = (function () {
     h += '<div class="ag-sec">Where the money is</div>';
     h += row('Booked', money(total) + ' of ' + money(S.target));
     h += row('Pace', (ahead ? '+' : '−') + money(Math.abs(total - due)) + ' vs ' + money(due), ahead);
-    h += row('Calling streak', el('streak-days').textContent + ' days');
+    h += row('Calling streak', callingStreak() + ' days');
 
     h += '<div class="ag-sec">The inputs</div>';
     S.weekly.forEach(function (m) {
@@ -2126,7 +2250,7 @@ window.Charts = (function () {
      Celebration
      ================================================================== */
 
-  var COLORS = ['#8a1fd0', '#0283ec', '#0d9268', '#f2661a', '#ab2fed', '#ff60f0'];
+  var COLORS = ['#8a1fd0', '#0283ec', '#d61f6d', '#e07a00', '#ab2fed', '#ff60f0'];
 
   function celebrate(count) {
     if (reduced) return;
@@ -2165,7 +2289,7 @@ window.Charts = (function () {
       var alive = false;
 
       bits.forEach(function (b) {
-        b.vy += 0.42;          /* gravity */
+        b.vy += 0.42;
         b.vx *= 0.99;
         b.x += b.vx;
         b.y += b.vy;
@@ -2189,35 +2313,39 @@ window.Charts = (function () {
   }
 
   /* ==================================================================
-     Custom cursor — fine pointers only
+     Cursor — one circle. Position and scale both run in the same rAF, so
+     nothing is waiting on a CSS transition to catch up.
      ================================================================== */
 
   function initCursor() {
     if (!window.matchMedia('(pointer: fine)').matches || reduced) return;
 
-    var ring = document.querySelector('.cursor');
-    var dot = document.querySelector('.cursor-dot');
-    var rx = innerWidth / 2, ry = innerHeight / 2, mx = rx, my = ry;
+    var dot = document.querySelector('.cursor');
+    var x = innerWidth / 2, y = innerHeight / 2;
+    var tx = x, ty = y, s = 1, ts = 1;
+    /* The chart is deliberately not "hot": a swollen cursor sits right on top
+       of the readout it is scrubbing. */
     var HOT = 'a, button, input, textarea, summary, .task, .step, .del, .link-btn';
 
     document.addEventListener('mousemove', function (e) {
-      mx = e.clientX; my = e.clientY;
+      tx = e.clientX; ty = e.clientY;
       document.documentElement.classList.add('has-cursor');
-      dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-      ring.classList.toggle('is-hot', !!(e.target.closest && e.target.closest(HOT)));
+      var hot = !!(e.target.closest && e.target.closest(HOT));
+      ts = hot ? 2.5 : 1;
+      dot.classList.toggle('hot', hot);
     }, { passive: true });
 
-    document.addEventListener('mousedown', function () { ring.classList.add('is-down'); });
-    document.addEventListener('mouseup', function () { ring.classList.remove('is-down'); });
+    document.addEventListener('mousedown', function () { ts *= 0.7; });
+    document.addEventListener('mouseup', function () { ts /= 0.7; });
     document.addEventListener('mouseleave', function () {
       document.documentElement.classList.remove('has-cursor');
     });
 
-    /* the ring trails the pointer — that lag is the whole effect */
     (function loop() {
-      rx += (mx - rx) * 0.18;
-      ry += (my - ry) * 0.18;
-      ring.style.transform = 'translate(' + rx.toFixed(2) + 'px,' + ry.toFixed(2) + 'px)';
+      x += (tx - x) * 0.38;
+      y += (ty - y) * 0.38;
+      s += (ts - s) * 0.22;
+      dot.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) scale(' + s.toFixed(3) + ')';
       requestAnimationFrame(loop);
     })();
   }
@@ -2266,8 +2394,6 @@ window.Charts = (function () {
     });
   }
 
-  /* ---------------- export / import ---------------- */
-
   function initBackup() {
     el('export').addEventListener('click', function () {
       var blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
@@ -2304,9 +2430,9 @@ window.Charts = (function () {
 
   function renderAll() {
     S = Store.state();
-    renderMast();
+    if (view > currentWeek()) view = currentWeek();
+    renderTop();
     renderToday();
-    renderStreaks();
     renderMetrics();
     renderMinis();
     renderRamp();
@@ -2317,7 +2443,13 @@ window.Charts = (function () {
 
   function init() {
     S = Store.load();
+    view = currentWeek();
     renderAll();
+    initReveals();
+
+    el('wk-prev').addEventListener('click', function () { go(view - 1); });
+    el('wk-next').addEventListener('click', function () { go(view + 1); });
+    el('back-now').addEventListener('click', function () { go(currentWeek()); });
 
     el('log-rev').addEventListener('click', logRevenue);
     el('who').addEventListener('keydown', function (e) { if (e.key === 'Enter') logRevenue(); });
@@ -2337,7 +2469,6 @@ window.Charts = (function () {
     initSync();
     initBackup();
 
-    /* Sync brings remote state in after first paint; re-render on arrival. */
     Store.start(function () {
       S = Store.state();
       renderAll();
@@ -2347,8 +2478,15 @@ window.Charts = (function () {
     var today = iso(new Date());
     setInterval(function () {
       var d = iso(new Date());
-      if (d !== today) { today = d; renderAll(); }
+      if (d !== today) { today = d; view = currentWeek(); renderAll(); }
     }, 60000);
+
+    /* the chart's viewBox depends on width, so re-lay it out on resize */
+    var rt;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(renderRamp, 200);
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

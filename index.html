@@ -13,32 +13,50 @@
 <body>
 
 <div class="cursor" aria-hidden="true"></div>
-<div class="cursor-dot" aria-hidden="true"></div>
 
-<!-- ============ MASTHEAD: the 26-week clock ============ -->
-<header class="mast">
+<!-- ============ TOP NAV: the 26-week clock, and the week selector ============ -->
+<header class="topbar">
   <div class="wrap">
-    <div class="label" id="datum">loading</div>
-    <h1 id="mast-title">Week —</h1>
-    <div class="mast-row">
-      <div class="mast-meta">
-        <span class="label" id="remaining"></span>
-        <span class="label" id="deadline"></span>
-      </div>
-      <span class="mast-pace num" id="mast-pace">—</span>
+    <div class="topbar-row">
+      <button class="wknav" id="wk-prev" type="button" aria-label="Previous week">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+
+      <h1 class="wk-title" id="wk-title" data-reveal-text>Week 1</h1>
+      <span class="wk-of" id="wk-of">of 26</span>
+
+      <button class="wknav" id="wk-next" type="button" aria-label="Next week">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+
+      <span class="pace-chip num" id="mast-pace">—</span>
     </div>
-    <div class="rail" id="rail" aria-hidden="true"></div>
+
+    <!-- One notch per week. Filled portion is the aurora gradient, so the
+         brand colour marks progress instead of sitting in a banner. -->
+    <div class="rail" id="rail">
+      <div class="rail-fill" id="rail-fill"></div>
+      <div class="rail-ticks" aria-hidden="true"></div>
+      <div class="rail-hits" id="rail-hits" role="tablist" aria-label="Jump to week"></div>
+    </div>
   </div>
 </header>
 
 <div class="wrap">
 
+  <div class="daterow">
+    <span id="datum">loading</span>
+    <span id="remaining"></span>
+    <span id="deadline"></span>
+    <button class="link-btn" id="back-now" type="button" hidden>Back to this week</button>
+  </div>
+
   <!-- ============ TODAY ============ -->
-  <section class="card" id="today-card">
+  <section class="card reveal" id="today-card">
     <div class="card-head">
       <div>
         <span class="label">Today</span>
-        <h2>Non-negotiable</h2>
+        <h2 data-reveal-text>Non-negotiable</h2>
       </div>
       <div class="today-ring">
         <svg viewBox="0 0 44 44" aria-hidden="true">
@@ -52,27 +70,31 @@
     <div id="today"></div>
   </section>
 
-  <!-- ============ STREAKS ============ -->
-  <section class="streaks">
-    <div class="streak">
-      <span class="label">Calling streak</span>
-      <span class="big num" id="streak-days">0</span>
-      <span class="unit">days unbroken</span>
-      <span class="spark" aria-hidden="true">🔥</span>
+  <!-- ============ PACE CHART ============ -->
+  <section class="card ramp reveal">
+    <div class="card-head">
+      <div>
+        <span class="label">Revenue vs. pace</span>
+        <h2 id="ramp-pct" data-reveal-text>—</h2>
+      </div>
+      <span class="label num" id="rev-target"></span>
     </div>
-    <div class="streak">
-      <span class="label">Conversations</span>
-      <span class="big num" id="streak-touch">0</span>
-      <span class="unit">had, all-time</span>
+    <div class="ramp-wrap" id="ramp-wrap">
+      <svg id="ramp" aria-label="Revenue against target pace over 26 weeks" role="img"></svg>
+      <div class="tip" id="ramp-tip" aria-hidden="true"></div>
+    </div>
+    <div class="legend">
+      <span><i class="swatch swatch--target"></i>where you should be</span>
+      <span><i class="swatch swatch--actual"></i>where you are</span>
     </div>
   </section>
 
   <!-- ============ WEEKLY INPUTS ============ -->
-  <section class="card">
+  <section class="card reveal">
     <div class="card-head">
       <div>
-        <span class="label">This week</span>
-        <h2>The inputs</h2>
+        <span class="label" id="inputs-eyebrow">This week</span>
+        <h2 data-reveal-text>The inputs</h2>
       </div>
       <span class="label" id="week-window"></span>
     </div>
@@ -80,54 +102,35 @@
   </section>
 
   <!-- ============ THE OTHER FOUR ============ -->
-  <section class="card">
+  <section class="card reveal">
     <div class="card-head">
       <div>
         <span class="label">By week</span>
-        <h2>The other four</h2>
+        <h2 data-reveal-text>The other four</h2>
       </div>
     </div>
     <div class="minis" id="minis"></div>
   </section>
 
-  <!-- ============ PACE CHART ============ -->
-  <section class="card ramp">
-    <div class="card-head">
-      <div>
-        <span class="label">Revenue vs. pace</span>
-        <h2 id="ramp-pct">—</h2>
-      </div>
-    </div>
-    <div class="ramp-wrap" id="ramp-wrap">
-      <svg id="ramp" aria-label="Revenue against target pace over 26 weeks" role="img"></svg>
-      <div class="tip" id="ramp-tip" aria-hidden="true"></div>
-    </div>
-    <div class="legend">
-      <span><i class="swatch" style="background:#b9a3d6"></i>where you should be</span>
-      <span><i class="swatch" style="background:#8a1fd0"></i>where you are</span>
-    </div>
-  </section>
-
   <!-- ============ REVENUE ============ -->
-  <section class="card">
+  <section class="card reveal">
     <div class="card-head">
       <div>
         <span class="label">Revenue booked</span>
       </div>
-      <span class="label num" id="rev-target"></span>
     </div>
     <div class="money" id="rev-total">$0<small> / $100,000</small></div>
-    <div><span class="pace-chip" id="pace">—</span></div>
+    <div><span class="pace-chip pace-chip--solid" id="pace">—</span></div>
     <div class="row">
       <input type="number" id="amt" placeholder="Amount" inputmode="decimal" aria-label="Amount" style="flex:1 1 110px;width:auto">
       <input type="text" id="who" placeholder="Client / what for" aria-label="Client or what for" style="flex:2 1 150px;width:auto">
-      <button class="btn" id="log-rev"><span>Log it</span></button>
+      <button class="btn" id="log-rev" type="button"><span>Log it</span></button>
     </div>
     <div class="ledger" id="ledger"></div>
   </section>
 
   <!-- ============ SUNDAY REVIEW ============ -->
-  <section class="card">
+  <section class="card reveal">
     <div class="card-head">
       <div>
         <span class="label">Sunday review</span>
@@ -146,22 +149,22 @@
       <label class="label" for="r-change">One change for next week</label>
       <textarea id="r-change" data-k="change"></textarea>
     </div>
-    <button class="btn ghost wide" id="make-agenda"><span>Build the 1:1 agenda</span></button>
+    <button class="btn ghost wide" id="make-agenda" type="button"><span>Build the 1:1 agenda</span></button>
     <div class="agenda" id="agenda" hidden></div>
   </section>
 
   <!-- ============ ADJUST + SYNC ============ -->
-  <section class="card">
+  <section class="card reveal">
     <details>
       <summary class="label">Adjust the plan</summary>
       <div style="margin-top:18px">
         <div class="label" style="margin-bottom:10px">Daily non-negotiables</div>
         <div id="edit-daily"></div>
-        <button class="btn ghost sm" id="add-daily"><span>+ Add daily</span></button>
+        <button class="btn ghost sm" id="add-daily" type="button"><span>+ Add daily</span></button>
 
         <div class="label" style="margin:22px 0 10px">Weekly targets</div>
         <div id="edit-weekly"></div>
-        <button class="btn ghost sm" id="add-weekly"><span>+ Add weekly</span></button>
+        <button class="btn ghost sm" id="add-weekly" type="button"><span>+ Add weekly</span></button>
 
         <p class="note">Change targets on Sundays, not on Wednesdays when you're behind. That's the whole point of the friend.</p>
       </div>
@@ -182,23 +185,23 @@
           <label class="label" for="sb-key">Anon key</label>
           <input type="text" id="sb-key" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false">
         </div>
-        <button class="btn sm" id="sb-save"><span>Save keys</span></button>
+        <button class="btn sm" id="sb-save" type="button"><span>Save keys</span></button>
 
         <div id="sb-auth" style="margin-top:22px">
           <div class="field">
             <label class="label" for="sb-email">Your email</label>
             <input type="email" id="sb-email" placeholder="you@example.com" autocomplete="email">
           </div>
-          <button class="btn sm" id="sb-signin"><span>Email me a sign-in link</span></button>
-          <button class="btn ghost sm" id="sb-signout" hidden><span>Sign out</span></button>
+          <button class="btn sm" id="sb-signin" type="button"><span>Email me a sign-in link</span></button>
+          <button class="btn ghost sm" id="sb-signout" type="button" hidden><span>Sign out</span></button>
         </div>
 
         <p class="note" id="sb-msg"></p>
 
         <div class="label" style="margin:22px 0 10px">Backup</div>
         <div class="row" style="margin-top:0">
-          <button class="btn ghost sm" id="export"><span>Export JSON</span></button>
-          <button class="btn ghost sm" id="import-btn"><span>Import JSON</span></button>
+          <button class="btn ghost sm" id="export" type="button"><span>Export JSON</span></button>
+          <button class="btn ghost sm" id="import-btn" type="button"><span>Import JSON</span></button>
           <input type="file" id="import" accept="application/json,.json" hidden>
         </div>
       </div>

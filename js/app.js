@@ -12,6 +12,10 @@
   var reduced = Charts.reduced;
   var S;
 
+  /* Which week the page is showing. Defaults to the live one; the rail can
+     put it anywhere from week 1 to now. */
+  var view = 0;
+
   function el(id) { return document.getElementById(id); }
 
   /* ---------------- dates ---------------- */
@@ -29,7 +33,7 @@
   }
   function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
   function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
-  function weekIndex() {
+  function currentWeek() {
     return Math.max(0, Math.floor(daysBetween(parseISO(S.start), lastSunday(new Date())) / 7));
   }
   function weekKey(i) { return 'w' + i; }
@@ -55,13 +59,10 @@
     if (!w.rt) w.rt = {};
     return w;
   }
-  function liveRevenue() {
-    return S.revenue.filter(function (r) { return !r.del; });
-  }
+  function liveRevenue() { return S.revenue.filter(function (r) { return !r.del; }); }
 
   /* ---------------- pace math ---------------- */
 
-  /* Linear-interpolate the monthly cumulative ramp onto weeks 1..26. */
   function targetAtWeek(w) {
     var pos = w / (WEEKS / 6);
     if (pos <= 0) return 0;
@@ -85,6 +86,74 @@
 
   function save() { Store.save(); }
 
+  /* ---------------- reveals ---------------- */
+
+  /* Split into per-word containers holding per-character spans, so words never
+     break across lines and the stagger still runs character by character. */
+  function splitText(node) {
+    if (node.dataset.split) return;
+    node.dataset.split = '1';
+    var text = node.textContent;
+    node.textContent = '';
+    var i = 0;
+    text.split(/(\s+)/).forEach(function (token) {
+      if (!token) return;
+      if (/^\s+$/.test(token)) { node.appendChild(document.createTextNode(' ')); return; }
+      var word = document.createElement('span');
+      word.className = 'rt';
+      token.split('').forEach(function (ch) {
+        var c = document.createElement('i');
+        c.textContent = ch;
+        c.style.transitionDelay = (i * 26) + 'ms';
+        i++;
+        word.appendChild(c);
+      });
+      node.appendChild(word);
+    });
+  }
+
+  function revealText(node) {
+    if (!node) return;
+    splitText(node);
+    requestAnimationFrame(function () { node.classList.add('rt-in'); });
+  }
+
+  function initReveals() {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+
+    if (reduced || !('IntersectionObserver' in window)) {
+      cards.forEach(function (c) { c.classList.add('in'); });
+      document.querySelectorAll('[data-reveal-text]').forEach(revealText);
+      return;
+    }
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in');
+        var h = e.target.querySelector('[data-reveal-text]');
+        if (h) setTimeout(function () { revealText(h); }, 140);
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
+
+    cards.forEach(function (c, i) {
+      /* above-the-fold cards come in on a stagger rather than on scroll */
+      if (i < 2) {
+        setTimeout(function () {
+          c.classList.add('in');
+          var h = c.querySelector('[data-reveal-text]');
+          if (h) setTimeout(function () { revealText(h); }, 140);
+        }, 220 + i * 130);
+      } else {
+        io.observe(c);
+      }
+    });
+
+    /* the hero line runs first, before anything else moves */
+    revealText(el('wk-title'));
+  }
+
   /* ---------------- number count-up ---------------- */
 
   function countUp(node, to, fmt) {
@@ -103,38 +172,81 @@
   }
 
   /* ==================================================================
-     Masthead
+     Top nav
      ================================================================== */
 
-  function renderMast() {
-    var now = new Date(), w = weekIndex();
+  function renderTop() {
+    var now = new Date(), cur = currentWeek();
     var end = addDays(parseISO(S.start), WEEKS * 7 - 1);
 
+    var title = el('wk-title');
+    var want = 'Week ' + (view + 1);
+    /* only re-split when the text actually changes, or the reveal restarts */
+    if (title.dataset.text !== want) {
+      title.dataset.text = want;
+      if (title.dataset.split) {
+        title.textContent = want;
+        title.dataset.split = '';
+        splitText(title);
+        title.classList.add('rt-in');
+      } else {
+        title.textContent = want;
+      }
+    }
+    el('wk-of').textContent = 'of ' + WEEKS;
+
     el('datum').textContent = DAY[now.getDay()] + ' · ' + pretty(now);
-    el('mast-title').textContent = 'Week ' + Math.min(w + 1, WEEKS) + ' of ' + WEEKS;
     el('remaining').textContent = Math.max(0, daysBetween(now, end)) + ' days left';
     el('deadline').textContent = 'ends ' + pretty(end);
     el('week-window').textContent =
-      pretty(addDays(parseISO(S.start), w * 7)) + '–' + pretty(addDays(parseISO(S.start), w * 7 + 6));
-    el('review-when').textContent = 'week ' + (w + 1);
+      pretty(addDays(parseISO(S.start), view * 7)) + '–' + pretty(addDays(parseISO(S.start), view * 7 + 6));
+    el('review-when').textContent = 'week ' + (view + 1);
+    el('inputs-eyebrow').textContent = view === cur ? 'This week' : 'Week ' + (view + 1);
 
-    var diff = revenueTotal() - targetAtWeek(w + 1);
-    el('mast-pace').textContent =
-      (diff >= 0 ? money(diff) + ' ahead of pace' : money(-diff) + ' behind pace');
+    var diff = revenueTotal() - targetAtWeek(cur + 1);
+    var chip = el('mast-pace');
+    chip.dataset.s = diff >= 0 ? 'ahead' : 'behind';
+    chip.textContent = diff >= 0 ? money(diff) + ' ahead' : money(-diff) + ' behind';
 
-    /* one segment per week — the deadline, always in view */
-    var rail = el('rail');
-    if (rail.childElementCount !== WEEKS) {
-      rail.innerHTML = '';
+    /* rail: gradient fill to the live week, one clickable notch per week */
+    el('rail-fill').style.width = ((cur + 1) / WEEKS * 100) + '%';
+
+    var hits = el('rail-hits');
+    if (hits.childElementCount !== WEEKS) {
+      hits.innerHTML = '';
       for (var i = 0; i < WEEKS; i++) {
-        var s = document.createElement('i');
-        s.style.animationDelay = (i * 18) + 'ms';
-        rail.appendChild(s);
+        (function (n) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.setAttribute('role', 'tab');
+          b.title = 'Week ' + (n + 1);
+          b.setAttribute('aria-label', 'Week ' + (n + 1));
+          b.addEventListener('click', function () { go(n); });
+          hits.appendChild(b);
+        })(i);
       }
     }
-    Array.prototype.forEach.call(rail.children, function (node, i) {
-      node.className = i < w ? 'done' : (i === w ? 'now' : '');
+    Array.prototype.forEach.call(hits.children, function (b, i) {
+      b.disabled = i > cur;
+      b.setAttribute('aria-selected', i === view ? 'true' : 'false');
     });
+
+    el('wk-prev').disabled = view <= 0;
+    el('wk-next').disabled = view >= cur;
+    el('back-now').hidden = view === cur;
+
+    /* the daily list only makes sense for today */
+    el('today-card').style.display = view === cur ? '' : 'none';
+  }
+
+  function go(n) {
+    var cur = currentWeek();
+    view = Math.max(0, Math.min(cur, n));
+    renderTop();
+    renderMetrics();
+    renderMinis();
+    renderReview();
+    el('agenda').hidden = true;
   }
 
   /* ==================================================================
@@ -175,7 +287,6 @@
 
         save();
         renderToday();
-        renderStreaks();
         renderMetrics();
         renderMinis();
 
@@ -196,14 +307,11 @@
     return S.daily.length > 0 && S.daily.every(function (i) { return !!day.done[i.id]; });
   }
 
-  /* ==================================================================
-     Streaks
-     ================================================================== */
-
-  function renderStreaks() {
-    /* consecutive days the keystone call task was done. Today not being
-       done *yet* must not break it — otherwise the page tells you you've
-       failed every morning before you've started. */
+  /* Consecutive days the keystone call task was done. Today not being done
+     *yet* must not break it — otherwise the page tells you you've failed
+     every morning before you've started. Still reported in the agenda even
+     though the streak block is gone from the page. */
+  function callingStreak() {
     var run = 0, d = parseISO(S.start), today = new Date(), todayKey = iso(today);
     while (d <= today) {
       var key = iso(d), rec = S.days[key];
@@ -211,14 +319,7 @@
       else if (key !== todayKey) run = 0;
       d = addDays(d, 1);
     }
-
-    var total = 0;
-    Object.keys(S.weeks).forEach(function (k) {
-      total += (S.weeks[k].counts || {})['w-conv'] || 0;
-    });
-
-    countUp(el('streak-days'), run);
-    countUp(el('streak-touch'), total, function (n) { return n.toLocaleString('en-US'); });
+    return run;
   }
 
   /* ==================================================================
@@ -226,14 +327,14 @@
      ================================================================== */
 
   function bump(id, delta, step, silent) {
-    var w = weekRec(weekIndex());
+    var w = weekRec(view);
     w.counts[id] = Math.max(0, (w.counts[id] || 0) + delta * (step || 1));
     w.t[id] = Store.now();
-    if (!silent) { save(); renderMetrics(); renderMinis(); renderStreaks(); }
+    if (!silent) { save(); renderMetrics(); renderMinis(); }
   }
 
   function renderMetrics() {
-    var wk = weekRec(weekIndex());
+    var wk = weekRec(view);
     var host = el('metrics');
     host.innerHTML = '';
 
@@ -249,8 +350,15 @@
           '<button class="step" type="button" data-d="-1" aria-label="Decrease">–</button>' +
           '<button class="step" type="button" data-d="1" aria-label="Increase">+</button>' +
         '</div>' +
-        '<div class="bar"><i style="width:' + Math.min(100, (v / m.target) * 100) + '%"></i></div>';
+        '<div class="bar"><i></i></div>';
       row.querySelector('.metric-name').textContent = m.label;
+
+      /* start at 0 and let the fill animate to width on the next frame */
+      var bar = row.querySelector('.bar i');
+      var pct = Math.min(100, (v / m.target) * 100);
+      if (reduced) bar.style.width = pct + '%';
+      else requestAnimationFrame(function () { bar.style.width = pct + '%'; });
+
       row.querySelectorAll('.step').forEach(function (btn) {
         btn.addEventListener('click', function () { bump(m.id, +btn.dataset.d); });
       });
@@ -263,73 +371,60 @@
      ================================================================== */
 
   var MINIS = [
-    { id: 'w-cust', name: 'Customers signed', color: 'var(--s1)', hex: '#8a1fd0', tint: 'var(--s1-tint)', cumulative: true },
-    { id: 'w-show', name: 'Local walk-ins',   color: 'var(--s2)', hex: '#0283ec', tint: 'var(--s2-tint)' },
-    { id: 'w-gym',  name: 'Gym sessions',     color: 'var(--s3)', hex: '#0d9268', tint: 'var(--s3-tint)' },
-    { id: 'w-str',  name: 'Stranger convos',  color: 'var(--s4)', hex: '#f2661a', tint: 'var(--s4-tint)' }
+    { id: 'w-cust', name: 'Customers signed', hex: '#8a1fd0', cumulative: true },
+    { id: 'w-show', name: 'Local walk-ins',   hex: '#0283ec' },
+    { id: 'w-gym',  name: 'Gym sessions',     hex: '#d61f6d' },
+    { id: 'w-str',  name: 'Stranger convos',  hex: '#e07a00' }
   ];
 
   function renderMinis() {
-    var cur = weekIndex(), host = el('minis');
+    var host = el('minis');
     host.innerHTML = '';
     Charts.resetMeters();
 
     MINIS.forEach(function (m) {
       var def = S.weekly.filter(function (x) { return x.id === m.id; })[0] || { target: 1 };
 
-      /* per-week series, and the running total for the cumulative one */
-      var vals = [], run = 0, i;
-      for (i = 0; i <= cur; i++) {
-        var v = ((S.weeks[weekKey(i)] || {}).counts || {})[m.id] || 0;
-        run += v;
-        vals.push(m.cumulative ? run : v);
+      var nowVal = 0;
+      if (m.cumulative) {
+        for (var i = 0; i <= view; i++) {
+          nowVal += ((S.weeks[weekKey(i)] || {}).counts || {})[m.id] || 0;
+        }
+      } else {
+        nowVal = (weekRec(view).counts || {})[m.id] || 0;
       }
-      var nowVal = vals[vals.length - 1] || 0;
 
-      /* A cumulative jar fills toward the whole 26 weeks; a weekly one
-         fills toward this week's target. "Hit" for the cumulative one
-         means on pace, not finished — otherwise it never lights up. */
+      /* A cumulative jar fills toward the whole 26 weeks; a weekly one fills
+         toward that week's target. "Hit" for the cumulative one means on
+         pace, not finished — otherwise it would never light up. */
       var frac, hit, caption;
       if (m.cumulative) {
         var allTime = def.target * WEEKS;
         frac = allTime ? nowVal / allTime : 0;
-        hit = nowVal >= def.target * (cur + 1);
+        hit = nowVal >= def.target * (view + 1);
         caption = 'of ' + allTime + ' by week ' + WEEKS;
       } else {
         frac = def.target ? nowVal / def.target : 0;
         hit = nowVal >= def.target;
-        caption = 'of ' + def.target + ' this week';
+        caption = 'of ' + def.target + (view === currentWeek() ? ' this week' : ' that week');
       }
 
       var card = document.createElement('div');
       card.className = 'mini' + (hit ? ' hit' : '');
-      card.style.setProperty('--c', m.color);
-      card.style.setProperty('--tint', m.tint);
+      card.style.setProperty('--c', m.hex);
       card.innerHTML =
         '<span class="name"></span>' +
-        '<span class="v num">' + nowVal + '</span>' +
+        '<span class="v">' + nowVal + '</span>' +
         '<span class="of"></span>' +
         '<div class="jar"></div>' +
-        '<div class="spark-row"></div>' +
         '<span class="flag"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="3" ' +
           'stroke-linecap="round" stroke-linejoin="round"><path d="' + CHECK + '"/></svg></span>';
       card.querySelector('.name').textContent = m.name;
       card.querySelector('.of').textContent = caption;
 
-      /* No separate target line: the jar is scaled so that full *is* the
-         target, which is a stronger signal than a hairline near the rim. */
+      /* The jar is scaled so that full *is* the target — a stronger signal
+         than a hairline near the rim. */
       Charts.meter(card.querySelector('.jar'), { id: m.id, color: m.hex, frac: frac });
-
-      /* weekly history under the jar */
-      var sparks = card.querySelector('.spark-row');
-      var peak = Math.max.apply(null, vals.concat([m.cumulative ? 1 : def.target, 1]));
-      var series = vals.slice(-WEEKS);
-      series.forEach(function (v, k) {
-        var bar = document.createElement('i');
-        bar.style.height = Math.max(2, (v / peak) * 18) + 'px';
-        if (k === series.length - 1) bar.className = 'last';
-        sparks.appendChild(bar);
-      });
 
       host.appendChild(card);
     });
@@ -343,7 +438,7 @@
     Charts.ramp(el('ramp'), {
       weeks: WEEKS,
       target: S.target,
-      currentWeek: weekIndex(),
+      currentWeek: currentWeek(),
       byWeek: revenueByWeek(),
       targetAt: targetAtWeek,
       tip: el('ramp-tip'),
@@ -351,6 +446,8 @@
     });
     el('ramp-pct').textContent =
       Math.round(revenueTotal() / S.target * 100) + '% of ' + money(S.target).replace(',000', 'k');
+    el('rev-target').textContent =
+      'week ' + Math.min(currentWeek() + 1, WEEKS) + ' pace: ' + money(targetAtWeek(currentWeek() + 1));
   }
 
   /* ==================================================================
@@ -358,11 +455,10 @@
      ================================================================== */
 
   function renderRevenue() {
-    var total = revenueTotal(), w = weekIndex() + 1;
+    var total = revenueTotal(), w = currentWeek() + 1;
     var due = targetAtWeek(w), diff = total - due;
 
     el('rev-total').innerHTML = money(total) + '<small> / ' + money(S.target) + '</small>';
-    el('rev-target').textContent = 'week ' + Math.min(w, WEEKS) + ' pace: ' + money(due);
 
     var p = el('pace');
     p.dataset.s = diff >= 0 ? 'ahead' : 'behind';
@@ -384,7 +480,7 @@
           r.del = 1;
           r.t = Store.now();
           save();
-          renderRevenue(); renderRamp(); renderMast();
+          renderRevenue(); renderRamp(); renderTop();
         });
         host.appendChild(row);
       });
@@ -403,8 +499,8 @@
     el('amt').value = '';
     el('who').value = '';
     save();
-    renderRevenue(); renderRamp(); renderMast();
-    if (!reduced) celebrate(28);
+    renderRevenue(); renderRamp(); renderTop();
+    celebrate(28);
   }
 
   /* ==================================================================
@@ -412,13 +508,13 @@
      ================================================================== */
 
   function renderReview() {
-    var wk = weekRec(weekIndex());
+    var wk = weekRec(view);
     ['won', 'missed', 'change'].forEach(function (k) {
       var t = document.querySelector('[data-k="' + k + '"]');
       if (document.activeElement === t) return;   /* don't fight the caret mid-sync */
       t.value = wk.review[k] || '';
       t.oninput = function () {
-        var live = weekRec(weekIndex());
+        var live = weekRec(view);
         live.review[k] = t.value;
         live.rt[k] = Store.now();
         save();
@@ -427,9 +523,9 @@
   }
 
   function buildAgenda() {
-    var w = weekIndex(), wk = weekRec(w);
-    var total = revenueTotal(), due = targetAtWeek(w + 1), ahead = total >= due;
-    var h = '<div class="ag-head">Week ' + (w + 1) + ' of ' + WEEKS + ' &middot; ' + pretty(new Date()) + '</div>';
+    var wk = weekRec(view);
+    var total = revenueTotal(), due = targetAtWeek(view + 1), ahead = total >= due;
+    var h = '<div class="ag-head">Week ' + (view + 1) + ' of ' + WEEKS + ' &middot; ' + pretty(new Date()) + '</div>';
 
     function row(label, val, hit) {
       var d = document.createElement('div');
@@ -444,7 +540,7 @@
     h += '<div class="ag-sec">Where the money is</div>';
     h += row('Booked', money(total) + ' of ' + money(S.target));
     h += row('Pace', (ahead ? '+' : '−') + money(Math.abs(total - due)) + ' vs ' + money(due), ahead);
-    h += row('Calling streak', el('streak-days').textContent + ' days');
+    h += row('Calling streak', callingStreak() + ' days');
 
     h += '<div class="ag-sec">The inputs</div>';
     S.weekly.forEach(function (m) {
@@ -521,7 +617,7 @@
      Celebration
      ================================================================== */
 
-  var COLORS = ['#8a1fd0', '#0283ec', '#0d9268', '#f2661a', '#ab2fed', '#ff60f0'];
+  var COLORS = ['#8a1fd0', '#0283ec', '#d61f6d', '#e07a00', '#ab2fed', '#ff60f0'];
 
   function celebrate(count) {
     if (reduced) return;
@@ -560,7 +656,7 @@
       var alive = false;
 
       bits.forEach(function (b) {
-        b.vy += 0.42;          /* gravity */
+        b.vy += 0.42;
         b.vx *= 0.99;
         b.x += b.vx;
         b.y += b.vy;
@@ -584,35 +680,39 @@
   }
 
   /* ==================================================================
-     Custom cursor — fine pointers only
+     Cursor — one circle. Position and scale both run in the same rAF, so
+     nothing is waiting on a CSS transition to catch up.
      ================================================================== */
 
   function initCursor() {
     if (!window.matchMedia('(pointer: fine)').matches || reduced) return;
 
-    var ring = document.querySelector('.cursor');
-    var dot = document.querySelector('.cursor-dot');
-    var rx = innerWidth / 2, ry = innerHeight / 2, mx = rx, my = ry;
+    var dot = document.querySelector('.cursor');
+    var x = innerWidth / 2, y = innerHeight / 2;
+    var tx = x, ty = y, s = 1, ts = 1;
+    /* The chart is deliberately not "hot": a swollen cursor sits right on top
+       of the readout it is scrubbing. */
     var HOT = 'a, button, input, textarea, summary, .task, .step, .del, .link-btn';
 
     document.addEventListener('mousemove', function (e) {
-      mx = e.clientX; my = e.clientY;
+      tx = e.clientX; ty = e.clientY;
       document.documentElement.classList.add('has-cursor');
-      dot.style.transform = 'translate(' + mx + 'px,' + my + 'px)';
-      ring.classList.toggle('is-hot', !!(e.target.closest && e.target.closest(HOT)));
+      var hot = !!(e.target.closest && e.target.closest(HOT));
+      ts = hot ? 2.5 : 1;
+      dot.classList.toggle('hot', hot);
     }, { passive: true });
 
-    document.addEventListener('mousedown', function () { ring.classList.add('is-down'); });
-    document.addEventListener('mouseup', function () { ring.classList.remove('is-down'); });
+    document.addEventListener('mousedown', function () { ts *= 0.7; });
+    document.addEventListener('mouseup', function () { ts /= 0.7; });
     document.addEventListener('mouseleave', function () {
       document.documentElement.classList.remove('has-cursor');
     });
 
-    /* the ring trails the pointer — that lag is the whole effect */
     (function loop() {
-      rx += (mx - rx) * 0.18;
-      ry += (my - ry) * 0.18;
-      ring.style.transform = 'translate(' + rx.toFixed(2) + 'px,' + ry.toFixed(2) + 'px)';
+      x += (tx - x) * 0.38;
+      y += (ty - y) * 0.38;
+      s += (ts - s) * 0.22;
+      dot.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) scale(' + s.toFixed(3) + ')';
       requestAnimationFrame(loop);
     })();
   }
@@ -661,8 +761,6 @@
     });
   }
 
-  /* ---------------- export / import ---------------- */
-
   function initBackup() {
     el('export').addEventListener('click', function () {
       var blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
@@ -699,9 +797,9 @@
 
   function renderAll() {
     S = Store.state();
-    renderMast();
+    if (view > currentWeek()) view = currentWeek();
+    renderTop();
     renderToday();
-    renderStreaks();
     renderMetrics();
     renderMinis();
     renderRamp();
@@ -712,7 +810,13 @@
 
   function init() {
     S = Store.load();
+    view = currentWeek();
     renderAll();
+    initReveals();
+
+    el('wk-prev').addEventListener('click', function () { go(view - 1); });
+    el('wk-next').addEventListener('click', function () { go(view + 1); });
+    el('back-now').addEventListener('click', function () { go(currentWeek()); });
 
     el('log-rev').addEventListener('click', logRevenue);
     el('who').addEventListener('keydown', function (e) { if (e.key === 'Enter') logRevenue(); });
@@ -732,7 +836,6 @@
     initSync();
     initBackup();
 
-    /* Sync brings remote state in after first paint; re-render on arrival. */
     Store.start(function () {
       S = Store.state();
       renderAll();
@@ -742,8 +845,15 @@
     var today = iso(new Date());
     setInterval(function () {
       var d = iso(new Date());
-      if (d !== today) { today = d; renderAll(); }
+      if (d !== today) { today = d; view = currentWeek(); renderAll(); }
     }, 60000);
+
+    /* the chart's viewBox depends on width, so re-lay it out on resize */
+    var rt;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(renderRamp, 200);
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
