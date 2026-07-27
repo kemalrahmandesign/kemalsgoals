@@ -16,6 +16,13 @@
      put it anywhere from week 1 to now. */
   var view = 0;
 
+  /* Last-rendered fill % per counter, so a bar animates from where it was to
+     where it is now instead of collapsing to zero and refilling on each tap. */
+  var lastBarPct = {};
+  /* The inputs section fills its bars the first time it scrolls into view, so
+     the fill is actually watched rather than completing off-screen on load. */
+  var metricsRevealed = false;
+
   function el(id) { return document.getElementById(id); }
 
   /* ---------------- dates ---------------- */
@@ -124,6 +131,7 @@
     if (reduced || !('IntersectionObserver' in window)) {
       cards.forEach(function (c) { c.classList.add('in'); });
       document.querySelectorAll('[data-reveal-text]').forEach(revealText);
+      fillBars();
       return;
     }
 
@@ -133,6 +141,7 @@
         e.target.classList.add('in');
         var h = e.target.querySelector('[data-reveal-text]');
         if (h) setTimeout(function () { revealText(h); }, 140);
+        if (e.target.querySelector('#metrics')) fillBars();
         io.unobserve(e.target);
       });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
@@ -353,16 +362,38 @@
         '<div class="bar"><i></i></div>';
       row.querySelector('.metric-name').textContent = m.label;
 
-      /* start at 0 and let the fill animate to width on the next frame */
       var bar = row.querySelector('.bar i');
       var pct = Math.min(100, (v / m.target) * 100);
-      if (reduced) bar.style.width = pct + '%';
-      else requestAnimationFrame(function () { bar.style.width = pct + '%'; });
+      bar.dataset.target = pct;
+      var prev = lastBarPct[m.id] !== undefined ? lastBarPct[m.id] : 0;
+      lastBarPct[m.id] = pct;
+
+      /* Start the bar where it last was. Once the section has been seen, grow
+         it to the new value now (forcing a reflow between the two writes so
+         the transition actually runs); before that, leave it and let the
+         reveal fill it — otherwise the fill happens off-screen during load. */
+      bar.style.width = prev + '%';
+      if (reduced || metricsRevealed) {
+        void bar.offsetWidth;
+        bar.style.width = pct + '%';
+      }
 
       row.querySelectorAll('.step').forEach(function (btn) {
         btn.addEventListener('click', function () { bump(m.id, +btn.dataset.d); });
       });
       host.appendChild(row);
+    });
+
+    if (metricsRevealed) fillBars();
+  }
+
+  /* Grow every input bar to its recorded target. Called on the section's
+     first reveal, and after that this is a no-op catch-up. */
+  function fillBars() {
+    metricsRevealed = true;
+    document.querySelectorAll('#metrics .bar i').forEach(function (bar) {
+      void bar.offsetWidth;
+      bar.style.width = (bar.dataset.target || 0) + '%';
     });
   }
 

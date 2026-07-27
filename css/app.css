@@ -336,20 +336,14 @@ html.has-cursor summary { cursor: none; }
 
 .bar { position: relative; height: 10px; background: var(--mist); border-radius: var(--pill); overflow: hidden; }
 .bar i {
-  display: block; height: 100%; border-radius: var(--pill);
+  display: block; width: 0; height: 100%; border-radius: var(--pill);
   background: var(--violet);
-  transition: width .75s var(--ease-spring), background-color .35s ease;
+  /* ease-out, not spring: a progress fill must not overshoot past its value
+     and settle back. Width is animated from its previous value to the new
+     one so the colour flows in rather than appearing. */
+  transition: width .8s var(--ease-out), background-color .35s ease;
 }
 .metric[data-hit="1"] .bar i { background: var(--good); }
-/* a highlight travels the filled portion while it is short of target */
-.bar i::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
-  transform: translateX(-100%);
-  animation: sheen 2.4s ease-in-out infinite;
-}
-.metric[data-hit="1"] .bar i::after { animation: none; }
-@keyframes sheen { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(300%); } }
 
 /* ==========================================================================
    The other four — liquid meters on white, no tinted blocks
