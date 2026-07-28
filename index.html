@@ -173,21 +173,13 @@
     <details>
       <summary class="label">Sync across devices</summary>
       <div style="margin-top:18px" id="sync-panel">
-        <p class="note" style="margin-top:0">
-          Paste a Supabase project URL and anon key, then sign in with your email.
-          Every device you sign in on shares one history. Setup steps are in the README.
+        <p class="note" style="margin-top:0" id="sync-intro">
+          Connected to your Supabase project. To sync this device, enter your email and open
+          the link it sends — once per device. (First time: run the setup in the README so
+          there's a table to sync into.)
         </p>
-        <div class="field">
-          <label class="label" for="sb-url">Project URL</label>
-          <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
-        </div>
-        <div class="field">
-          <label class="label" for="sb-key">Anon key</label>
-          <input type="text" id="sb-key" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false">
-        </div>
-        <button class="btn sm" id="sb-save" type="button"><span>Save keys</span></button>
 
-        <div id="sb-auth" style="margin-top:22px">
+        <div id="sb-auth" style="margin-top:16px">
           <div class="field">
             <label class="label" for="sb-email">Your email</label>
             <input type="email" id="sb-email" placeholder="you@example.com" autocomplete="email">
@@ -197,6 +189,22 @@
         </div>
 
         <p class="note" id="sb-msg"></p>
+
+        <details style="margin-top:16px">
+          <summary class="label">Project keys (advanced)</summary>
+          <div style="margin-top:14px">
+            <div class="field">
+              <label class="label" for="sb-url">Project URL</label>
+              <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="field">
+              <label class="label" for="sb-key">Publishable key</label>
+              <input type="text" id="sb-key" placeholder="sb_publishable_…" autocomplete="off" spellcheck="false">
+            </div>
+            <button class="btn sm" id="sb-save" type="button"><span>Save keys</span></button>
+            <p class="note">Already set for you. Change these only to point this browser at a different project.</p>
+          </div>
+        </details>
 
         <div class="label" style="margin:22px 0 10px">Backup</div>
         <div class="row" style="margin-top:0">
@@ -214,6 +222,7 @@
 
 </div>
 
+<script src="js/config.js"></script>
 <script src="js/store.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/app.js"></script>

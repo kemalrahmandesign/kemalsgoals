@@ -779,7 +779,12 @@
       var signedIn = !!Store.auth.session();
       el('sb-signout').hidden = !signedIn;
       el('sb-signin').hidden = signedIn;
-      if (signedIn) el('sb-email').closest('.field').hidden = true;
+      var field = el('sb-email').closest('.field');
+      if (field) field.hidden = signedIn;
+      var intro = el('sync-intro');
+      if (intro) intro.textContent = signedIn
+        ? 'Syncing this device. Your history is shared with every device you sign in on.'
+        : 'Connected to your Supabase project. Enter your email and open the link it sends to sync this device — once per device. (First time: run the README setup so there is a table to sync into.)';
     });
   }
 

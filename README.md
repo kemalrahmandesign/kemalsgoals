@@ -25,13 +25,18 @@ and the app is fully usable offline.
 
 Without setup, each browser keeps its own separate history. To share one
 history across your phone, laptop and every browser you use, connect a free
-Supabase project. Roughly three minutes, once.
+Supabase project.
 
-### 1. Create the project
+**The project keys are already baked in** (`js/config.js`), so no device ever
+needs to paste them. Two one-time steps remain in the Supabase dashboard, plus
+a sign-in on each device.
 
-Sign up at [supabase.com](https://supabase.com) and create a project.
+The publishable key in `js/config.js` is safe to commit — it is designed to
+ship in client code. Your data is kept private by the row-level security in
+step 1 and your email sign-in, not by hiding the key. (Never commit a Supabase
+*secret* key — that one is different.)
 
-### 2. Create the table
+### 1. Create the table
 
 In the project's **SQL Editor**, run:
 
@@ -51,24 +56,29 @@ create policy "own row only" on dashboard
 ```
 
 Row-level security means your row is readable only by you, even though the
-anon key ships in the page. Without that policy the revenue ledger would be
-readable by anyone who found the URL.
+publishable key ships in the page. Without that policy the revenue ledger
+would be readable by anyone who found the URL.
 
-### 3. Allow your site to redirect back
+### 2. Allow your site to redirect back
 
-**Authentication → URL Configuration → Redirect URLs**, add wherever you host
-it (and `http://localhost:8000` if you want sync while developing).
+**Authentication → URL Configuration**. Set the **Site URL** and add to
+**Redirect URLs**:
 
-### 4. Paste the keys
+```
+https://kemalrahmandesign.github.io/kemalsgoals/
+```
 
-Open the dashboard, expand **Sync across devices**, and paste:
+Add `http://localhost:8000` too if you want sync while developing. Without
+this, the emailed sign-in link has nowhere valid to return to.
 
-- **Project URL** — Settings → API → Project URL
-- **Anon key** — Settings → API → Project API keys → `anon` `public`
+### 3. Sign in on each device
 
-Save, then enter your email and click the sign-in link it sends. Repeat the
-sign-in on each device. The keys are stored per browser, not committed to the
-repo.
+Open the dashboard, expand **Sync across devices**, enter your email, and open
+the link it sends. Repeat once per device. That's the only step you touch per
+device — the keys are already there.
+
+To point a browser at a *different* project, the pre-filled fields under
+**Project keys (advanced)** override the baked-in config, per browser.
 
 ### How merging works
 

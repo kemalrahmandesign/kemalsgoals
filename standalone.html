@@ -779,21 +779,13 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
     <details>
       <summary class="label">Sync across devices</summary>
       <div style="margin-top:18px" id="sync-panel">
-        <p class="note" style="margin-top:0">
-          Paste a Supabase project URL and anon key, then sign in with your email.
-          Every device you sign in on shares one history. Setup steps are in the README.
+        <p class="note" style="margin-top:0" id="sync-intro">
+          Connected to your Supabase project. To sync this device, enter your email and open
+          the link it sends — once per device. (First time: run the setup in the README so
+          there's a table to sync into.)
         </p>
-        <div class="field">
-          <label class="label" for="sb-url">Project URL</label>
-          <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
-        </div>
-        <div class="field">
-          <label class="label" for="sb-key">Anon key</label>
-          <input type="text" id="sb-key" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false">
-        </div>
-        <button class="btn sm" id="sb-save" type="button"><span>Save keys</span></button>
 
-        <div id="sb-auth" style="margin-top:22px">
+        <div id="sb-auth" style="margin-top:16px">
           <div class="field">
             <label class="label" for="sb-email">Your email</label>
             <input type="email" id="sb-email" placeholder="you@example.com" autocomplete="email">
@@ -803,6 +795,22 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
         </div>
 
         <p class="note" id="sb-msg"></p>
+
+        <details style="margin-top:16px">
+          <summary class="label">Project keys (advanced)</summary>
+          <div style="margin-top:14px">
+            <div class="field">
+              <label class="label" for="sb-url">Project URL</label>
+              <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="field">
+              <label class="label" for="sb-key">Publishable key</label>
+              <input type="text" id="sb-key" placeholder="sb_publishable_…" autocomplete="off" spellcheck="false">
+            </div>
+            <button class="btn sm" id="sb-save" type="button"><span>Save keys</span></button>
+            <p class="note">Already set for you. Change these only to point this browser at a different project.</p>
+          </div>
+        </details>
 
         <div class="label" style="margin:22px 0 10px">Backup</div>
         <div class="row" style="margin-top:0">
@@ -820,6 +828,23 @@ details[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
 
 </div>
 
+<script>
+/* The Supabase project this dashboard syncs to.
+
+   This publishable key is safe to commit. Supabase's publishable key is
+   designed to ship in client code — every device that loads the app uses it.
+   Your data is kept private by row-level security plus your email sign-in,
+   not by hiding this key. (Never put a *secret* key here — that one is
+   different and must stay server-side.)
+
+   To point the app at a different project, change these two values. Pasting
+   keys into "Adjust the plan → Sync across devices" overrides this, per
+   browser. */
+window.KEMAL_SYNC = {
+  url: 'https://qgumwbqxrdfolpsswvuh.supabase.co',
+  key: 'sb_publishable_ENodl9kzOKuBbhItcMlxgg_86-pqkhq'
+};
+</script>
 <script>
 /* ==========================================================================
    State, persistence and cross-device sync.
@@ -912,9 +937,14 @@ window.Store = (function () {
     }
   })();
 
+  /* Baked-in config (js/config.js) is the default; anything pasted into the
+     panel is kept per browser and overrides it. So a fresh device is already
+     pointed at the right project and only needs the email sign-in. */
   function readConfig() {
-    try { return JSON.parse(window.localStorage.getItem(CFG_KEY)) || {}; }
-    catch (e) { return {}; }
+    var baked = window.KEMAL_SYNC || {};
+    var ls = {};
+    try { ls = JSON.parse(window.localStorage.getItem(CFG_KEY)) || {}; } catch (e) {}
+    return { url: ls.url || baked.url || '', key: ls.key || baked.key || '' };
   }
   function writeConfig(c) {
     try { window.localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch (e) {}
@@ -1025,7 +1055,7 @@ window.Store = (function () {
     if (sb) return Promise.resolve(sb);
     var c = readConfig();
     if (!c.url || !c.key) return Promise.resolve(null);
-    return import('https://esm.sh/@supabase/supabase-js@2.45.4')
+    return import('https://esm.sh/@supabase/supabase-js@2')
       .then(function (m) {
         sb = m.createClient(c.url, c.key, {
           auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
@@ -2405,7 +2435,12 @@ window.Charts = (function () {
       var signedIn = !!Store.auth.session();
       el('sb-signout').hidden = !signedIn;
       el('sb-signin').hidden = signedIn;
-      if (signedIn) el('sb-email').closest('.field').hidden = true;
+      var field = el('sb-email').closest('.field');
+      if (field) field.hidden = signedIn;
+      var intro = el('sync-intro');
+      if (intro) intro.textContent = signedIn
+        ? 'Syncing this device. Your history is shared with every device you sign in on.'
+        : 'Connected to your Supabase project. Enter your email and open the link it sends to sync this device — once per device. (First time: run the README setup so there is a table to sync into.)';
     });
   }
 

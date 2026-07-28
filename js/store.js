@@ -89,9 +89,14 @@ window.Store = (function () {
     }
   })();
 
+  /* Baked-in config (js/config.js) is the default; anything pasted into the
+     panel is kept per browser and overrides it. So a fresh device is already
+     pointed at the right project and only needs the email sign-in. */
   function readConfig() {
-    try { return JSON.parse(window.localStorage.getItem(CFG_KEY)) || {}; }
-    catch (e) { return {}; }
+    var baked = window.KEMAL_SYNC || {};
+    var ls = {};
+    try { ls = JSON.parse(window.localStorage.getItem(CFG_KEY)) || {}; } catch (e) {}
+    return { url: ls.url || baked.url || '', key: ls.key || baked.key || '' };
   }
   function writeConfig(c) {
     try { window.localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch (e) {}
@@ -202,7 +207,7 @@ window.Store = (function () {
     if (sb) return Promise.resolve(sb);
     var c = readConfig();
     if (!c.url || !c.key) return Promise.resolve(null);
-    return import('https://esm.sh/@supabase/supabase-js@2.45.4')
+    return import('https://esm.sh/@supabase/supabase-js@2')
       .then(function (m) {
         sb = m.createClient(c.url, c.key, {
           auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
